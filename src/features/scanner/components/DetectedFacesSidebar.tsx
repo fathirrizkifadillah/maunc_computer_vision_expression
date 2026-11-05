@@ -34,11 +34,11 @@ export const DetectedFacesSidebar: React.FC<DetectedFacesSidebarProps> = ({
   };
 
   return (
-    <div className="w-full bg-white rounded-3xl p-4 shadow-card border border-gray-100 flex flex-col flex-shrink-0 max-h-[56%] overflow-hidden">
+    <div className="w-full bg-white rounded-3xl p-3.5 shadow-card border border-gray-100 flex flex-col flex-shrink-0 max-h-[48%] overflow-hidden">
       {/* Sidebar Header */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-gray-100 flex-shrink-0">
+      <div className="flex items-center justify-between pb-2 border-b border-gray-100 flex-shrink-0">
         <div>
-          <h2 className="text-base md:text-lg font-bold text-maunc-black tracking-tight">
+          <h2 className="text-sm md:text-base font-bold text-maunc-black tracking-tight">
             Detected Faces
           </h2>
           <div className="h-0.5 w-7 bg-maunc-yellow rounded-full mt-0.5" />
@@ -52,10 +52,10 @@ export const DetectedFacesSidebar: React.FC<DetectedFacesSidebarProps> = ({
       </div>
 
       {/* Face Cards Container */}
-      <div className="flex-1 mt-2.5 space-y-2 overflow-y-auto pr-1">
+      <div className="flex-1 mt-2 space-y-1.5 overflow-y-auto pr-1">
         {faces.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400">
-            <div className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center mb-1.5 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-3 text-center text-gray-400">
+            <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center mb-1 text-gray-400">
               <Users className="w-4 h-4" />
             </div>
             <p className="text-xs font-semibold text-gray-600">Menunggu Deteksi Wajah</p>

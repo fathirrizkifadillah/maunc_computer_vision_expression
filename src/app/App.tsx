@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Header, AppMode } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { InfoModal } from '../components/common/InfoModal';
+import { CameraSettingsModal } from '../components/common/CameraSettingsModal';
 import { HomePage } from '../pages/HomePage';
 import { ScannerView } from '../features/scanner/ScannerView';
 import { BattleView } from '../features/battle/BattleView';
@@ -10,9 +11,11 @@ import { CameraManager } from '../features/vision/camera/CameraManager';
 export const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>('scanner');
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleSelectMode = (newMode: AppMode) => {
     if (newMode !== mode) {
+      // Clean up camera when leaving mode to prevent stream leaks
       CameraManager.stopCamera(true);
       setMode(newMode);
     }
@@ -31,6 +34,7 @@ export const App: React.FC = () => {
         currentMode={mode}
         onSelectMode={handleSelectMode}
         onOpenInfo={() => setIsInfoOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Main View Area */}
@@ -45,6 +49,12 @@ export const App: React.FC = () => {
 
       {/* System Information Modal */}
       <InfoModal isOpen={isInfoOpen} onClose={() => setIsInfoOpen(false)} />
+
+      {/* Camera Settings Modal */}
+      <CameraSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 };

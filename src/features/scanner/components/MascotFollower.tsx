@@ -11,10 +11,10 @@ export const MascotFollower: React.FC<MascotFollowerProps> = ({ expression, sele
   const currentConfig = getExpressionConfig(expression);
 
   return (
-    <div className="w-full flex-1 min-h-[160px] max-h-[260px] flex flex-col items-center justify-end relative select-none">
+    <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-end relative select-none overflow-hidden">
       {/* Minimal Floating Expression Status Badge (Only shown when active, zero clutter) */}
       {selectedFaceId && (
-        <div className="mb-2 z-20 flex items-center space-x-2 bg-maunc-black/90 backdrop-blur-md text-white border border-white/10 px-3.5 py-1 rounded-full shadow-lg animate-fade-in">
+        <div className="mb-2 z-20 flex items-center space-x-2 bg-maunc-black/90 backdrop-blur-md text-white border border-maunc-yellow/30 px-3.5 py-1 rounded-full shadow-lg animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-maunc-yellow animate-ping" />
           <span className="text-xs font-bold tracking-wide">{selectedFaceId}</span>
           <span className="text-gray-400 text-xs">•</span>
@@ -24,12 +24,12 @@ export const MascotFollower: React.FC<MascotFollowerProps> = ({ expression, sele
         </div>
       )}
 
-      {/* Large Half-Body Mascot (Crisp, Hero-Sized, No Clutter Text) */}
-      <div className="relative w-full h-full flex items-end justify-center">
+      {/* Hero-Sized Half-Body Mascot (Large, Prominent, Crisp, Zero Clutter) */}
+      <div className="relative w-full flex-1 min-h-0 flex items-end justify-center">
         <img
           src="/assets/mascot/maunc-mascot-half.png"
           alt="MAUNC Mascot Robotic Tiger"
-          className="h-48 md:h-56 lg:h-64 w-auto max-w-full object-contain filter drop-shadow-[0_8px_24px_rgba(0,0,0,0.22)] transition-all duration-300 hover:scale-105"
+          className="h-full max-h-[380px] lg:max-h-[440px] xl:max-h-[500px] w-auto object-contain filter drop-shadow-[0_12px_28px_rgba(0,0,0,0.22)] transition-transform duration-300 hover:scale-105"
         />
       </div>
     </div>

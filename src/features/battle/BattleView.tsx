@@ -1,24 +1,31 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { RotateCcw, Users, AlertCircle } from 'lucide-react';
+import { RotateCcw, Users, AlertCircle, Sliders, Camera, SplitSquareVertical } from 'lucide-react';
 import { BattleState } from './types';
 import { BATTLE_CONFIG, pickRandomExpression, countFacesInZones, evaluateExpressionMatch } from './logic/battleEngine';
-import { useVisionPipeline } from '../vision/hooks/useVisionPipeline';
+import { CameraManager, CameraSettings } from '../vision/camera/CameraManager';
+import { FaceDetectorService } from '../vision/detection/FaceDetector';
+import { ExpressionClassifierService } from '../vision/classification/ExpressionClassifier';
 import { PlayerViewport } from './components/PlayerViewport';
 import { PlayerRegistrationModal } from './components/PlayerRegistrationModal';
 import { TargetExpressionCard } from './components/TargetExpressionCard';
 import { PlayerScoreCard } from './components/PlayerScoreCard';
+import { CameraSettingsModal } from '../../components/common/CameraSettingsModal';
 import { DetectedFace } from '../vision/types';
 
 export const BattleView: React.FC = () => {
-  const {
-    faces,
-    cameraStatus,
-    error: cameraError,
-    videoRef,
-    startCamera,
-    stopCamera,
-  } = useVisionPipeline({ autoStart: false, classificationIntervalMs: 150 });
+  // Camera Settings & Available Devices
+  const [cameraSettings, setCameraSettings] = useState<CameraSettings>(CameraManager.getSettings());
+  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [streamP1, setStreamP1] = useState<MediaStream | null>(null);
+  const [streamP2, setStreamP2] = useState<MediaStream | null>(null);
+
+  // Video Element Refs
+  const videoSharedRef = useRef<HTMLVideoElement | null>(null);
+  const videoP1Ref = useRef<HTMLVideoElement | null>(null);
+  const videoP2Ref = useRef<HTMLVideoElement | null>(null);
 
   // Battle State
   const [battleState, setBattleState] = useState<BattleState>({
@@ -57,7 +64,7 @@ export const BattleView: React.FC = () => {
 
   const [registeringPlayerId, setRegisteringPlayerId] = useState<1 | 2 | null>(null);
 
-  // Active faces per zone
+  // Active faces per player
   const [p1Face, setP1Face] = useState<DetectedFace | null>(null);
   const [p2Face, setP2Face] = useState<DetectedFace | null>(null);
   const [zoneCounts, setZoneCounts] = useState<{ p1: number; p2: number }>({ p1: 0, p2: 0 });
@@ -65,30 +72,269 @@ export const BattleView: React.FC = () => {
   const countdownTimerRef = useRef<number | null>(null);
   const roundTimerRef = useRef<number | null>(null);
   const consecutiveMatchRef = useRef<{ p1: number; p2: number }>({ p1: 0, p2: 0 });
+  const isLoopRunningRef = useRef<boolean>(false);
+  const animFrameRef = useRef<number | null>(null);
+  const lastClassifyTimeRef = useRef<number>(0);
+  const isClassifyingRef = useRef<boolean>(false);
 
-  // Start webcam if either player is registered and camera is idle
+  // Subscribe to CameraManager
   useEffect(() => {
-    if ((battleState.p1.isRegistered || battleState.p2.isRegistered) && cameraStatus === 'idle') {
-      startCamera();
+    const unsub = CameraManager.subscribe((state) => {
+      setCameraSettings(state.settings);
+      setIsCameraActive(CameraManager.isStreaming());
+      if (state.error) setCameraError(state.error);
+    });
+
+    // Enumerate devices initially
+    CameraManager.enumerateDevices().catch(() => {});
+
+    return () => {
+      unsub();
+    };
+  }, []);
+
+  // Start appropriate camera mode (Single or Dual)
+  const initCameras = useCallback(async () => {
+    setCameraError(null);
+    try {
+      const settings = CameraManager.getSettings();
+      if (settings.mode === 'dual') {
+        const { streamP1: s1, streamP2: s2 } = await CameraManager.startDualCameras(
+          settings.p1DeviceId,
+          settings.p2DeviceId
+        );
+        setStreamP1(s1);
+        setStreamP2(s2);
+      } else {
+        const stream = await CameraManager.startCamera(settings.singleDeviceId);
+        setStreamP1(stream);
+        setStreamP2(stream);
+      }
+      setIsCameraActive(true);
+    } catch (err) {
+      setCameraError(err instanceof Error ? err.message : 'Gagal mengakses kamera.');
     }
-  }, [battleState.p1.isRegistered, battleState.p2.isRegistered, cameraStatus, startCamera]);
+  }, []);
 
-  // Zone partition & face tracking update
+  // Trigger camera startup once at least one player registers
   useEffect(() => {
-    if (cameraStatus !== 'active') return;
+    if ((battleState.p1.isRegistered || battleState.p2.isRegistered) && !isCameraActive) {
+      initCameras();
+    }
+  }, [battleState.p1.isRegistered, battleState.p2.isRegistered, isCameraActive, initCameras]);
 
-    const { p1Faces, p2Faces } = countFacesInZones(faces, true);
-    setZoneCounts({ p1: p1Faces.length, p2: p2Faces.length });
+  // Main Computer Vision Processing Loop for Battle
+  const runBattleVisionLoop = useCallback(() => {
+    if (!isLoopRunningRef.current) return;
 
-    const p1Valid = p1Faces.length === 1 ? p1Faces[0] : null;
-    const p2Valid = p2Faces.length === 1 ? p2Faces[0] : null;
+    const now = performance.now();
+    const settings = CameraManager.getSettings();
 
-    setP1Face(p1Valid);
-    setP2Face(p2Valid);
+    if (settings.mode === 'dual') {
+      // --- DUAL CAMERA MODE (2 physical devices) ---
+      const vidP1 = videoP1Ref.current;
+      const vidP2 = videoP2Ref.current;
 
+      let detectedP1: DetectedFace | null = null;
+      let countP1 = 0;
+      let detectedP2: DetectedFace | null = null;
+      let countP2 = 0;
+
+      // 1. Process Camera 1 for Player 1
+      if (vidP1 && vidP1.readyState >= 2 && !vidP1.paused) {
+        const resP1 = FaceDetectorService.detect(vidP1, now);
+        countP1 = resP1.boxes.length;
+        if (resP1.boxes.length === 1) {
+          detectedP1 = {
+            trackId: 101,
+            faceId: 'P1',
+            box: resP1.boxes[0],
+            expression: p1Face?.expression ?? 'netral',
+            expressionLabel: p1Face?.expressionLabel ?? 'Menganalisis',
+            rawModelLabel: p1Face?.rawModelLabel ?? '',
+            confidence: p1Face?.confidence ?? 0,
+            status: 'active',
+            missingFrames: 0,
+            lastSeen: Date.now(),
+          };
+        }
+      }
+
+      // 2. Process Camera 2 for Player 2
+      if (vidP2 && vidP2.readyState >= 2 && !vidP2.paused) {
+        // Monotonic timestamp offset for 2nd detection call
+        const resP2 = FaceDetectorService.detect(vidP2, now + 1);
+        countP2 = resP2.boxes.length;
+        if (resP2.boxes.length === 1) {
+          detectedP2 = {
+            trackId: 102,
+            faceId: 'P2',
+            box: resP2.boxes[0],
+            expression: p2Face?.expression ?? 'netral',
+            expressionLabel: p2Face?.expressionLabel ?? 'Menganalisis',
+            rawModelLabel: p2Face?.rawModelLabel ?? '',
+            confidence: p2Face?.confidence ?? 0,
+            status: 'active',
+            missingFrames: 0,
+            lastSeen: Date.now(),
+          };
+        }
+      }
+
+      setZoneCounts({ p1: countP1, p2: countP2 });
+      setP1Face(detectedP1);
+      setP2Face(detectedP2);
+
+      // 3. Cadenced Emotion Classification for Dual Mode
+      if (
+        !isClassifyingRef.current &&
+        now - lastClassifyTimeRef.current >= 150 &&
+        ExpressionClassifierService.isLoaded()
+      ) {
+        isClassifyingRef.current = true;
+        lastClassifyTimeRef.current = now;
+
+        const tasks: Promise<void>[] = [];
+        if (detectedP1 && vidP1) {
+          tasks.push(
+            ExpressionClassifierService.classifyFace(vidP1, detectedP1.box, 101).then((res) => {
+              setP1Face((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      expression: res.expression,
+                      expressionLabel: res.label,
+                      rawModelLabel: res.rawLabel,
+                      confidence: res.confidence,
+                    }
+                  : null
+              );
+            })
+          );
+        }
+        if (detectedP2 && vidP2) {
+          tasks.push(
+            ExpressionClassifierService.classifyFace(vidP2, detectedP2.box, 102).then((res) => {
+              setP2Face((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      expression: res.expression,
+                      expressionLabel: res.label,
+                      rawModelLabel: res.rawLabel,
+                      confidence: res.confidence,
+                    }
+                  : null
+              );
+            })
+          );
+        }
+
+        Promise.all(tasks).finally(() => {
+          isClassifyingRef.current = false;
+        });
+      }
+    } else {
+      // --- SINGLE CAMERA MODE (1 shared webcam split into Left & Right) ---
+      const vidShared = videoP1Ref.current || videoSharedRef.current;
+      if (vidShared && vidShared.readyState >= 2 && !vidShared.paused) {
+        const res = FaceDetectorService.detect(vidShared, now);
+        const rawFaces: DetectedFace[] = res.boxes.map((box, idx) => ({
+          trackId: idx + 1,
+          faceId: `Face ${idx + 1}`,
+          box,
+          expression: 'netral',
+          expressionLabel: 'Menganalisis',
+          rawModelLabel: '',
+          confidence: 0,
+          status: 'active',
+          missingFrames: 0,
+          lastSeen: Date.now(),
+        }));
+
+        const { p1Faces, p2Faces } = countFacesInZones(rawFaces, true);
+        setZoneCounts({ p1: p1Faces.length, p2: p2Faces.length });
+
+        const validP1 = p1Faces.length === 1 ? p1Faces[0] : null;
+        const validP2 = p2Faces.length === 1 ? p2Faces[0] : null;
+
+        setP1Face(validP1);
+        setP2Face(validP2);
+
+        // Classification in single mode
+        if (
+          !isClassifyingRef.current &&
+          now - lastClassifyTimeRef.current >= 150 &&
+          ExpressionClassifierService.isLoaded()
+        ) {
+          isClassifyingRef.current = true;
+          lastClassifyTimeRef.current = now;
+
+          const tasks: Promise<void>[] = [];
+          if (validP1) {
+            tasks.push(
+              ExpressionClassifierService.classifyFace(vidShared, validP1.box, 1).then((r) => {
+                setP1Face((p) =>
+                  p
+                    ? {
+                        ...p,
+                        expression: r.expression,
+                        expressionLabel: r.label,
+                        rawModelLabel: r.rawLabel,
+                        confidence: r.confidence,
+                      }
+                    : null
+                );
+              })
+            );
+          }
+          if (validP2) {
+            tasks.push(
+              ExpressionClassifierService.classifyFace(vidShared, validP2.box, 2).then((r) => {
+                setP2Face((p) =>
+                  p
+                    ? {
+                        ...p,
+                        expression: r.expression,
+                        expressionLabel: r.label,
+                        rawModelLabel: r.rawLabel,
+                        confidence: r.confidence,
+                      }
+                    : null
+                );
+              })
+            );
+          }
+          Promise.all(tasks).finally(() => {
+            isClassifyingRef.current = false;
+          });
+        }
+      }
+    }
+
+    animFrameRef.current = requestAnimationFrame(runBattleVisionLoop);
+  }, [p1Face?.expression, p1Face?.expressionLabel, p1Face?.rawModelLabel, p1Face?.confidence, p2Face?.expression, p2Face?.expressionLabel, p2Face?.rawModelLabel, p2Face?.confidence]);
+
+  // Activate / stop vision loop
+  useEffect(() => {
+    if (isCameraActive) {
+      isLoopRunningRef.current = true;
+      animFrameRef.current = requestAnimationFrame(runBattleVisionLoop);
+    } else {
+      isLoopRunningRef.current = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    }
+    return () => {
+      isLoopRunningRef.current = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [isCameraActive, runBattleVisionLoop]);
+
+  // Update Player Ready States based on zone face count
+  useEffect(() => {
     setBattleState((prev) => {
-      const p1Ready = prev.p1.isRegistered && p1Faces.length === 1;
-      const p2Ready = prev.p2.isRegistered && p2Faces.length === 1;
+      const p1Ready = prev.p1.isRegistered && zoneCounts.p1 === 1;
+      const p2Ready = prev.p2.isRegistered && zoneCounts.p2 === 1;
 
       let nextStatus = prev.status;
       if (prev.status === 'unregistered' || prev.status === 'waiting_ready' || prev.status === 'ready') {
@@ -106,23 +352,23 @@ export const BattleView: React.FC = () => {
         status: nextStatus,
         p1: {
           ...prev.p1,
-          isFaceInZone: p1Faces.length > 0,
-          facesInZoneCount: p1Faces.length,
+          isFaceInZone: zoneCounts.p1 > 0,
+          facesInZoneCount: zoneCounts.p1,
           isReady: p1Ready,
-          currentExpression: p1Valid?.expression ?? null,
-          currentConfidence: p1Valid?.confidence ?? 0,
+          currentExpression: p1Face?.expression ?? null,
+          currentConfidence: p1Face?.confidence ?? 0,
         },
         p2: {
           ...prev.p2,
-          isFaceInZone: p2Faces.length > 0,
-          facesInZoneCount: p2Faces.length,
+          isFaceInZone: zoneCounts.p2 > 0,
+          facesInZoneCount: zoneCounts.p2,
           isReady: p2Ready,
-          currentExpression: p2Valid?.expression ?? null,
-          currentConfidence: p2Valid?.confidence ?? 0,
+          currentExpression: p2Face?.expression ?? null,
+          currentConfidence: p2Face?.confidence ?? 0,
         },
       };
     });
-  }, [faces, cameraStatus]);
+  }, [zoneCounts.p1, zoneCounts.p2, p1Face?.expression, p1Face?.confidence, p2Face?.expression, p2Face?.confidence]);
 
   // Round Winner Evaluation Loop
   useEffect(() => {
@@ -309,25 +555,41 @@ export const BattleView: React.FC = () => {
       },
     });
 
-    stopCamera();
+    setStreamP1(null);
+    setStreamP2(null);
+    CameraManager.stopCamera(true);
+    setIsCameraActive(false);
   };
 
   const canStart = battleState.p1.isReady && battleState.p2.isReady && battleState.status === 'ready';
 
   return (
-    <div className="w-full max-w-[1540px] mx-auto px-4 lg:px-8 py-3 flex-1 flex flex-col justify-between gap-3 min-h-0">
-      {/* Hidden single shared webcam video element */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none"
-      />
-
+    <div className="w-full max-w-[1540px] mx-auto px-4 lg:px-8 py-2 h-[calc(100dvh-57px-41px)] max-h-[calc(100dvh-57px-41px)] overflow-hidden flex flex-col justify-between min-h-0">
       {/* Top Split Battle Arena: Dominant, Spacious, Large Viewports */}
-      <div className="relative w-full rounded-3xl p-3 md:p-4 bg-white/50 backdrop-blur-md border border-gray-200/90 shadow-xl flex-1 flex flex-col justify-center min-h-[300px] md:min-h-[360px] lg:min-h-[400px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5 relative items-center h-full">
+      <div className="relative w-full rounded-3xl p-2.5 md:p-3 bg-white/70 backdrop-blur-md border border-gray-200/90 shadow-xl flex-1 flex flex-col justify-center min-h-0 mb-2">
+        {/* Quick Camera Mode Switcher Header Pill */}
+        <div className="absolute top-2.5 left-4 z-30">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[11px] font-bold rounded-full border border-white/10 transition-colors shadow-sm cursor-pointer"
+            title="Klik untuk mengubah mode kamera (1 kamera atau 2 kamera terpisah)"
+          >
+            {cameraSettings.mode === 'dual' ? (
+              <>
+                <Camera className="w-3.5 h-3.5 text-maunc-yellow" />
+                <span>Mode: 2 Kamera Terpisah</span>
+              </>
+            ) : (
+              <>
+                <SplitSquareVertical className="w-3.5 h-3.5 text-maunc-yellow" />
+                <span>Mode: 1 Kamera (Split View)</span>
+              </>
+            )}
+            <Sliders className="w-3 h-3 text-gray-400 ml-1" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative items-stretch h-full min-h-0">
           {/* Vertical Yellow Divider in center (Desktop) */}
           <div className="hidden md:block absolute left-1/2 top-2 bottom-2 w-1.5 bg-maunc-yellow -translate-x-1/2 rounded-full z-20 shadow-sm" />
 
@@ -335,18 +597,22 @@ export const BattleView: React.FC = () => {
           <PlayerViewport
             player={battleState.p1}
             detectedFace={p1Face}
-            isStreaming={cameraStatus === 'active'}
+            isStreaming={isCameraActive}
             onOpenRegister={() => setRegisteringPlayerId(1)}
             zoneFaceCount={zoneCounts.p1}
+            stream={streamP1}
+            videoRef={videoP1Ref}
           />
 
           {/* Right: Player 2 Viewport */}
           <PlayerViewport
             player={battleState.p2}
             detectedFace={p2Face}
-            isStreaming={cameraStatus === 'active'}
+            isStreaming={isCameraActive}
             onOpenRegister={() => setRegisteringPlayerId(2)}
             zoneFaceCount={zoneCounts.p2}
+            stream={streamP2}
+            videoRef={videoP2Ref}
           />
         </div>
 
@@ -360,7 +626,7 @@ export const BattleView: React.FC = () => {
       </div>
 
       {/* Bottom Dashboard Section: Player 1 Score, Target Expression + Controls, Player 2 Score */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center flex-shrink-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center flex-shrink-0">
         {/* Left Column: Player 1 Score Card (Col 1-4) */}
         <div className="lg:col-span-4 flex flex-col space-y-1">
           <PlayerScoreCard player={battleState.p1} />
@@ -413,11 +679,19 @@ export const BattleView: React.FC = () => {
           <span>Reset Pemain</span>
         </button>
 
-        {/* Center: Match Format Badge */}
-        <div className="flex items-center space-x-2 text-xs text-gray-500 font-medium">
+        {/* Center: Match Format Badge with Click to Change */}
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="flex items-center space-x-2 text-xs text-gray-500 hover:text-maunc-black font-medium transition-colors cursor-pointer"
+        >
           <Users className="w-4 h-4 text-gray-400" />
-          <span>Pertandingan 2 Pemain • 1 Webcam Bersama</span>
-        </div>
+          <span>
+            {cameraSettings.mode === 'dual'
+              ? 'Pertandingan 2 Pemain • 2 Kamera Terpisah'
+              : 'Pertandingan 2 Pemain • 1 Webcam Bersama'}
+          </span>
+          <span className="text-[10px] text-amber-600 font-bold underline ml-1">Ubah Kamera</span>
+        </button>
 
         {/* Right: Clean MAUNC Emblem Identity */}
         <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
@@ -440,6 +714,17 @@ export const BattleView: React.FC = () => {
           onClose={() => setRegisteringPlayerId(null)}
         />
       )}
+
+      {/* Camera Settings Modal */}
+      <CameraSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onApplied={() => {
+          if (battleState.p1.isRegistered || battleState.p2.isRegistered) {
+            initCameras();
+          }
+        }}
+      />
     </div>
   );
 };

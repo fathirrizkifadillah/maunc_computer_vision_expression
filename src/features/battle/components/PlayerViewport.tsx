@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { UserPlus, Edit3, CheckCircle2, AlertTriangle, Trophy } from 'lucide-react';
 import { PlayerState } from '../types';
 import { DetectedFace } from '../../vision/types';
@@ -9,6 +9,9 @@ interface PlayerViewportProps {
   isStreaming: boolean;
   onOpenRegister: () => void;
   zoneFaceCount: number;
+  stream?: MediaStream | null;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  videoNode?: React.ReactNode;
 }
 
 export const PlayerViewport: React.FC<PlayerViewportProps> = ({
@@ -17,16 +20,31 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
   isStreaming,
   onOpenRegister,
   zoneFaceCount,
+  stream,
+  videoRef,
+  videoNode,
 }) => {
   const isRegistered = player.isRegistered;
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const activeVideoRef = videoRef || localVideoRef;
+
+  useEffect(() => {
+    const vid = activeVideoRef.current;
+    if (vid && stream) {
+      if (vid.srcObject !== stream) {
+        vid.srcObject = stream;
+        vid.play().catch(() => {});
+      }
+    }
+  }, [stream, activeVideoRef, isStreaming, isRegistered]);
 
   return (
-    <div className="relative w-full h-full min-h-[300px] md:min-h-[360px] lg:min-h-[400px] bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-xl flex items-center justify-center select-none group">
+    <div className="relative w-full h-full min-h-0 bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-xl flex items-center justify-center select-none group">
       {/* Decorative Cyber Corner Brackets [ ] */}
-      <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gray-700/60 rounded-tl-lg pointer-events-none" />
-      <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gray-700/60 rounded-tr-lg pointer-events-none" />
-      <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-gray-700/60 rounded-bl-lg pointer-events-none" />
-      <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-gray-700/60 rounded-br-lg pointer-events-none" />
+      <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gray-700/60 rounded-tl-lg pointer-events-none z-20" />
+      <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gray-700/60 rounded-tr-lg pointer-events-none z-20" />
+      <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-gray-700/60 rounded-bl-lg pointer-events-none z-20" />
+      <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-gray-700/60 rounded-br-lg pointer-events-none z-20" />
 
       {/* State 1: Unregistered State (Exact match to reference design) */}
       {!isRegistered ? (
@@ -50,7 +68,26 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
         </div>
       ) : (
         /* State 2: Registered & Active */
-        <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+          {/* Active Video Stream Feed */}
+          {isStreaming && (
+            videoNode ? (
+              videoNode
+            ) : (
+              <video
+                ref={(node) => {
+                  if (activeVideoRef) {
+                    (activeVideoRef as React.MutableRefObject<HTMLVideoElement | null>).current = node;
+                  }
+                }}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover scale-x-[-1]"
+              />
+            )
+          )}
+
           {/* Top Player Name & Ready Badge */}
           <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
             <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
@@ -85,7 +122,20 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
             )}
           </div>
 
-          {/* Face Detection Outline for this player */}
+          {/* Face Detection Bounding Box for this player */}
+          {detectedFace && isStreaming && (
+            <div
+              className="absolute border-2 border-maunc-yellow rounded-2xl pointer-events-none transition-all duration-75 z-10"
+              style={{
+                left: `${(1 - detectedFace.box.x - detectedFace.box.width) * 100}%`,
+                top: `${detectedFace.box.y * 100}%`,
+                width: `${detectedFace.box.width * 100}%`,
+                height: `${detectedFace.box.height * 100}%`,
+              }}
+            />
+          )}
+
+          {/* Face Detection Outline / Tag for this player */}
           {detectedFace && isStreaming && (
             <div className="absolute bottom-4 left-4 z-20 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white border border-white/10 flex items-center space-x-2">
               <span className="text-gray-400">Ekspresi:</span>
