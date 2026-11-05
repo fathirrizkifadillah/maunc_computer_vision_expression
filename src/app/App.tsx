@@ -13,14 +13,19 @@ export const App: React.FC = () => {
 
   const handleSelectMode = (newMode: AppMode) => {
     if (newMode !== mode) {
-      // Clean up camera when leaving mode to prevent stream leaks
       CameraManager.stopCamera(true);
       setMode(newMode);
     }
   };
 
+  const isScanner = mode === 'scanner';
+
   return (
-    <div className="min-h-[100dvh] flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black">
+    <div
+      className={`w-full ${
+        isScanner ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-[100dvh]'
+      } flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black`}
+    >
       {/* Top Navigation Header */}
       <Header
         currentMode={mode}
@@ -29,7 +34,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main View Area */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden">
         {mode === 'home' && <HomePage onSelectMode={handleSelectMode} />}
         {mode === 'scanner' && <ScannerView />}
         {mode === 'battle' && <BattleView />}

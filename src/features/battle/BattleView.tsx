@@ -149,13 +149,10 @@ export const BattleView: React.FC = () => {
     consecutiveMatchRef.current.p2 = p2Eval.newConsecutiveFrames;
 
     if (p1Eval.isMatched && p2Eval.isMatched) {
-      // Both matched simultaneously -> Draw
       handleBattleEnd('draw');
     } else if (p1Eval.isMatched) {
-      // Player 1 won
       handleBattleEnd('p1_won');
     } else if (p2Eval.isMatched) {
-      // Player 2 won
       handleBattleEnd('p2_won');
     }
   }, [p1Face, p2Face, battleState.status, battleState.targetExpression]);
@@ -175,7 +172,7 @@ export const BattleView: React.FC = () => {
           colors: ['#FDB813', '#121316', '#FFFFFF', '#10B981'],
         });
       } catch {
-        // Fallback if canvas context fails
+        // Fallback
       }
     }
 
@@ -200,7 +197,6 @@ export const BattleView: React.FC = () => {
   const startBattle = () => {
     if (!battleState.p1.isReady || !battleState.p2.isReady) return;
 
-    // Pick 1 of 6 expressions randomly (locked for round)
     const target = pickRandomExpression(battleState.targetExpression);
     consecutiveMatchRef.current = { p1: 0, p2: 0 };
 
@@ -226,14 +222,12 @@ export const BattleView: React.FC = () => {
         if (countdownTimerRef.current) window.clearInterval(countdownTimerRef.current);
         countdownTimerRef.current = null;
 
-        // Start active battling
         setBattleState((prev) => ({
           ...prev,
           status: 'battling',
           countdownValue: 0,
         }));
 
-        // Start round timeout countdown
         let remaining = BATTLE_CONFIG.ROUND_TIME_SEC;
         if (roundTimerRef.current) window.clearInterval(roundTimerRef.current);
         roundTimerRef.current = window.setInterval(() => {
@@ -247,7 +241,6 @@ export const BattleView: React.FC = () => {
     }, 1000);
   };
 
-  // Play Again Handler (keeps players, starts fresh round)
   const handlePlayAgain = () => {
     setBattleState((prev) => ({
       ...prev,
@@ -260,12 +253,10 @@ export const BattleView: React.FC = () => {
     }));
   };
 
-  // Change Player Handler
   const handleChangePlayer = (playerId: 1 | 2) => {
     setRegisteringPlayerId(playerId);
   };
 
-  // Save Player Name
   const handleSavePlayerName = (name: string) => {
     if (!registeringPlayerId) return;
 
@@ -280,7 +271,6 @@ export const BattleView: React.FC = () => {
     setRegisteringPlayerId(null);
   };
 
-  // Reset Both Players
   const handleResetAll = () => {
     if (countdownTimerRef.current) window.clearInterval(countdownTimerRef.current);
     if (roundTimerRef.current) window.clearInterval(roundTimerRef.current);
@@ -325,7 +315,7 @@ export const BattleView: React.FC = () => {
   const canStart = battleState.p1.isReady && battleState.p2.isReady && battleState.status === 'ready';
 
   return (
-    <div className="w-full max-w-[1540px] mx-auto px-4 lg:px-8 py-6 relative pb-32">
+    <div className="w-full max-w-[1540px] mx-auto px-4 lg:px-8 py-3 flex-1 flex flex-col justify-between gap-3 min-h-0">
       {/* Hidden single shared webcam video element */}
       <video
         ref={videoRef}
@@ -335,11 +325,11 @@ export const BattleView: React.FC = () => {
         className="fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none"
       />
 
-      {/* Top Split Battle Arena: Player 1 (Left) & Player 2 (Right) */}
-      <div className="relative w-full rounded-[2.5rem] p-3 md:p-4 bg-white/40 backdrop-blur-md border border-gray-200/80 shadow-2xl mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 relative">
+      {/* Top Split Battle Arena: Dominant, Spacious, Large Viewports */}
+      <div className="relative w-full rounded-3xl p-3 md:p-4 bg-white/50 backdrop-blur-md border border-gray-200/90 shadow-xl flex-1 flex flex-col justify-center min-h-[300px] md:min-h-[360px] lg:min-h-[400px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5 relative items-center h-full">
           {/* Vertical Yellow Divider in center (Desktop) */}
-          <div className="hidden md:block absolute left-1/2 top-4 bottom-4 w-1.5 bg-maunc-yellow -translate-x-1/2 rounded-full z-20 shadow-md" />
+          <div className="hidden md:block absolute left-1/2 top-2 bottom-2 w-1.5 bg-maunc-yellow -translate-x-1/2 rounded-full z-20 shadow-sm" />
 
           {/* Left: Player 1 Viewport */}
           <PlayerViewport
@@ -360,24 +350,24 @@ export const BattleView: React.FC = () => {
           />
         </div>
 
-        {/* Global Warning Banner if Camera Error or Capacity Exceeded */}
+        {/* Global Warning Banner if Camera Error */}
         {cameraError && (
-          <div className="mt-3 p-3 rounded-2xl bg-red-100 border border-red-300 text-red-800 text-xs flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div className="mt-2 p-2 rounded-xl bg-red-100 border border-red-300 text-red-800 text-xs flex items-center space-x-2">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
             <span>{cameraError}</span>
           </div>
         )}
       </div>
 
-      {/* Bottom Dashboard Section (Player 1 Score, Target Expression + Controls, Player 2 Score) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      {/* Bottom Dashboard Section: Player 1 Score, Target Expression + Controls, Player 2 Score */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center flex-shrink-0">
         {/* Left Column: Player 1 Score Card (Col 1-4) */}
-        <div className="lg:col-span-4 order-2 lg:order-1 flex flex-col space-y-3">
+        <div className="lg:col-span-4 flex flex-col space-y-1">
           <PlayerScoreCard player={battleState.p1} />
           {battleState.p1.isRegistered && (
             <button
               onClick={() => handleChangePlayer(1)}
-              className="text-xs font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-1 transition-colors"
+              className="text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
             >
               Ganti Pemain 1
             </button>
@@ -385,7 +375,7 @@ export const BattleView: React.FC = () => {
         </div>
 
         {/* Center Column: Target Expression Card + Start Button (Col 5-8) */}
-        <div className="lg:col-span-4 order-1 lg:order-2 flex flex-col items-center">
+        <div className="lg:col-span-4 flex flex-col items-center">
           <TargetExpressionCard
             status={battleState.status}
             targetExpression={battleState.targetExpression}
@@ -398,12 +388,12 @@ export const BattleView: React.FC = () => {
         </div>
 
         {/* Right Column: Player 2 Score Card (Col 9-12) */}
-        <div className="lg:col-span-4 order-3 lg:order-3 flex flex-col space-y-3">
+        <div className="lg:col-span-4 flex flex-col space-y-1">
           <PlayerScoreCard player={battleState.p2} />
           {battleState.p2.isRegistered && (
             <button
               onClick={() => handleChangePlayer(2)}
-              className="text-xs font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-1 transition-colors"
+              className="text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
             >
               Ganti Pemain 2
             </button>
@@ -411,39 +401,32 @@ export const BattleView: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Controls Bar: Reset Button on Left */}
-      <div className="mt-8 flex items-center justify-between flex-wrap gap-4 pt-4 border-t border-gray-200">
+      {/* Bottom Controls Bar */}
+      <div className="flex items-center justify-between flex-wrap gap-3 pt-1.5 border-t border-gray-200/80 flex-shrink-0">
+        {/* Left: Reset Button */}
         <button
           onClick={handleResetAll}
-          className="flex items-center space-x-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full text-xs md:text-sm transition-all shadow-sm active:scale-95"
+          className="flex items-center space-x-2 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
           title="Reset Seluruh Sesi Pertandingan"
         >
-          <RotateCcw className="w-4 h-4 text-gray-600" />
+          <RotateCcw className="w-3.5 h-3.5 text-gray-600" />
           <span>Reset Pemain</span>
         </button>
 
-        <div className="flex items-center space-x-3 text-xs text-gray-500">
+        {/* Center: Match Format Badge */}
+        <div className="flex items-center space-x-2 text-xs text-gray-500 font-medium">
           <Users className="w-4 h-4 text-gray-400" />
-          <span>Mode 2 Pemain • 1 Webcam Bersama</span>
+          <span>Pertandingan 2 Pemain • 1 Webcam Bersama</span>
         </div>
-      </div>
 
-      {/* Mascot Corner Character (matching Mode 2 reference design) */}
-      <div className="fixed -bottom-2 -right-2 z-30 pointer-events-none select-none flex items-end justify-end">
-        {/* Angled Yellow Tech Backdrop */}
-        <div
-          className="absolute bottom-0 right-0 w-64 md:w-80 h-48 md:h-64 bg-maunc-yellow z-0"
-          style={{
-            clipPath: 'polygon(35% 0%, 100% 0%, 100% 100%, 0% 100%)',
-          }}
-        />
-        {/* Standing Mascot with crossed arms */}
-        <div className="relative z-10 w-44 md:w-60 h-44 md:h-60">
+        {/* Right: Clean MAUNC Emblem Identity */}
+        <div className="flex items-center space-x-2 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
           <img
-            src="/assets/expressions/netral.png"
-            alt="Mascot Battle Referee"
-            className="w-full h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)]"
+            src="/assets/brand/maunc-logo.png"
+            alt="MAUNC Logo"
+            className="w-4 h-4 object-contain"
           />
+          <span className="text-[11px] font-bold text-maunc-black">MAUNC Arena</span>
         </div>
       </div>
 

@@ -21,7 +21,7 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
   const isRegistered = player.isRegistered;
 
   return (
-    <div className="relative w-full aspect-[4/3] md:aspect-[16/10] bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-xl flex items-center justify-center select-none group">
+    <div className="relative w-full h-full min-h-[300px] md:min-h-[360px] lg:min-h-[400px] bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-xl flex items-center justify-center select-none group">
       {/* Decorative Cyber Corner Brackets [ ] */}
       <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gray-700/60 rounded-tl-lg pointer-events-none" />
       <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gray-700/60 rounded-tr-lg pointer-events-none" />
@@ -37,7 +37,7 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
           <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white mb-1">
             Player {player.id}
           </h3>
-          <p className="text-gray-400 text-xs md:text-sm mb-6">
+          <p className="text-gray-400 text-xs md:text-sm mb-5">
             Daftarkan nama untuk memulai
           </p>
           <button
@@ -59,7 +59,7 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
               </span>
               <button
                 onClick={onOpenRegister}
-                className="pointer-events-auto text-gray-400 hover:text-maunc-yellow transition-colors ml-1"
+                className="pointer-events-auto text-gray-400 hover:text-maunc-yellow transition-colors ml-1 cursor-pointer"
                 title="Ubah Nama"
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -100,11 +100,11 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
 
           {/* Round Finish Results Overlay */}
           {player.result === 'won' && (
-            <div className="absolute inset-0 z-30 bg-emerald-950/75 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-emerald-500">
-              <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-3 text-maunc-yellow animate-bounce">
-                <Trophy className="w-10 h-10" />
+            <div className="absolute inset-0 z-30 bg-emerald-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-emerald-500">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-2 text-maunc-yellow animate-bounce">
+                <Trophy className="w-8 h-8" />
               </div>
-              <h2 className="text-3xl md:text-5xl font-black text-emerald-300 tracking-wider mb-1">
+              <h2 className="text-3xl md:text-4xl font-black text-emerald-300 tracking-wider mb-1">
                 MENANG!
               </h2>
               <p className="text-sm font-semibold text-white">{player.name}</p>
@@ -113,7 +113,7 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
 
           {player.result === 'lost' && (
             <div className="absolute inset-0 z-30 bg-red-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-              <h2 className="text-2xl md:text-4xl font-extrabold text-red-400 tracking-wider mb-1">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-red-400 tracking-wider mb-1">
                 KALAH
               </h2>
               <p className="text-xs text-gray-300">{player.name}</p>
@@ -122,7 +122,7 @@ export const PlayerViewport: React.FC<PlayerViewportProps> = ({
 
           {player.result === 'draw' && (
             <div className="absolute inset-0 z-30 bg-gray-900/75 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-              <h2 className="text-2xl md:text-4xl font-extrabold text-amber-300 tracking-wider mb-1">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-amber-300 tracking-wider mb-1">
                 SERI
               </h2>
               <p className="text-xs text-gray-300">{player.name}</p>

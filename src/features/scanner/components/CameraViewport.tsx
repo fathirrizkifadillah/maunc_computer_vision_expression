@@ -43,7 +43,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-[4/3] md:aspect-[16/10] lg:aspect-[16/10] bg-[#121316] rounded-[2rem] overflow-hidden shadow-2xl border border-gray-200/20 flex items-center justify-center select-none"
+      className="relative w-full h-full min-h-[320px] max-h-full bg-[#121316] rounded-3xl overflow-hidden shadow-xl border border-gray-200/20 flex items-center justify-center select-none"
     >
       {/* Video Stream Element */}
       <video
@@ -58,7 +58,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
       {/* Top Left LIVE Badge */}
       {isLive && (
-        <div className="absolute top-5 left-5 z-20 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-lg">
+        <div className="absolute top-4 left-4 z-20 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
           <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
           <span className="text-white text-xs font-bold tracking-wider">LIVE</span>
         </div>
@@ -66,7 +66,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
       {/* Max Capacity Warning Banner */}
       {isMaxCapacityReached && (
-        <div className="absolute top-5 right-5 z-20 flex items-center space-x-2 bg-amber-500/90 backdrop-blur-md px-3.5 py-1.5 rounded-full text-maunc-black text-xs font-bold shadow-lg animate-fade-in">
+        <div className="absolute top-4 right-4 z-20 flex items-center space-x-2 bg-amber-500/90 backdrop-blur-md px-3.5 py-1.5 rounded-full text-maunc-black text-xs font-bold shadow-lg animate-fade-in">
           <AlertCircle className="w-4 h-4 text-maunc-black" />
           <span>Kapasitas Maksimal (3 Wajah)</span>
         </div>
@@ -111,11 +111,11 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
       {/* Camera Inactive State */}
       {!isLive && (
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-gradient-to-b from-[#181A20] to-[#121316] z-10">
-          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-maunc-yellow">
-            <Camera className="w-8 h-8" />
+          <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-3 text-maunc-yellow">
+            <Camera className="w-7 h-7" />
           </div>
-          <h3 className="text-xl font-bold mb-1">Kamera Belum Aktif</h3>
-          <p className="text-gray-400 text-xs max-w-sm mb-6">
+          <h3 className="text-lg md:text-xl font-bold mb-1">Kamera Belum Aktif</h3>
+          <p className="text-gray-400 text-xs max-w-sm mb-5">
             Aktifkan kamera untuk mulai mendeteksi ekspresi wajah secara lokal dan real-time.
           </p>
 
@@ -127,7 +127,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
           <button
             onClick={onStartCamera}
-            className="flex items-center space-x-2 px-6 py-2.5 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-sm transition-all shadow-glow-yellow active:scale-95"
+            className="flex items-center space-x-2 px-6 py-2.5 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-xs md:text-sm transition-all shadow-glow-yellow active:scale-95 cursor-pointer"
           >
             <Camera className="w-4 h-4" />
             <span>Aktifkan Kamera</span>
@@ -137,10 +137,10 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
       {/* Floating Bottom Left Camera Controls */}
       {isLive && (
-        <div className="absolute bottom-5 left-5 z-20 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 shadow-lg">
+        <div className="absolute bottom-4 left-4 z-20 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-2.5 py-1.5 rounded-2xl border border-white/10 shadow-lg">
           <button
             onClick={onStopCamera}
-            className="p-2 text-white hover:text-red-400 hover:bg-white/10 rounded-xl transition-colors"
+            className="p-1.5 text-white hover:text-red-400 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
             title="Hentikan Kamera"
             aria-label="Hentikan Kamera"
           >
@@ -149,7 +149,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
           <button
             onClick={() => setIsMirrored(!isMirrored)}
-            className="p-2 text-white hover:text-maunc-yellow hover:bg-white/10 rounded-xl transition-colors"
+            className="p-1.5 text-white hover:text-maunc-yellow hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
             title="Mirror Kamera"
             aria-label="Mirror Kamera"
           >
@@ -160,10 +160,10 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
       {/* Floating Bottom Right Fullscreen Button */}
       {isLive && (
-        <div className="absolute bottom-5 right-5 z-20">
+        <div className="absolute bottom-4 right-4 z-20">
           <button
             onClick={toggleFullscreen}
-            className="p-2.5 bg-black/60 backdrop-blur-md text-white hover:text-maunc-yellow hover:bg-black/80 rounded-2xl border border-white/10 shadow-lg transition-colors"
+            className="p-2 bg-black/60 backdrop-blur-md text-white hover:text-maunc-yellow hover:bg-black/80 rounded-xl border border-white/10 shadow-lg transition-colors cursor-pointer"
             title="Layar Penuh"
             aria-label="Layar Penuh"
           >

@@ -16,21 +16,10 @@
   }
 }
 
-/* Custom hazard diagonal stripes matching the footer reference */
-.hazard-stripes {
-  background: repeating-linear-gradient(
-    -45deg,
-    #FDB813,
-    #FDB813 10px,
-    #121316 10px,
-    #121316 20px
-  );
-}
-
 /* Custom smooth scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {

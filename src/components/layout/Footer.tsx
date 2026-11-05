@@ -2,26 +2,30 @@ import React from 'react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="w-full bg-[#18181B] text-white py-3 px-4 md:px-8 border-t border-gray-800 relative z-10 overflow-hidden">
-      <div className="max-w-[1540px] mx-auto flex items-center justify-between flex-wrap gap-3">
-        {/* Left: Hazard diagonal tech stripes + MAUNC brand text */}
+    <footer className="w-full bg-[#14161A] text-white py-2.5 px-4 md:px-8 border-t border-gray-800/80 relative z-20 flex-shrink-0">
+      <div className="max-w-[1540px] mx-auto flex items-center justify-between flex-wrap gap-2">
+        {/* Left: Official MAUNC Gear Emblem Logo + Brand Text */}
         <div className="flex items-center space-x-3">
-          <div className="h-6 w-10 sm:w-12 hazard-stripes rounded-sm border border-yellow-500/30 flex-shrink-0" />
+          <img
+            src="/assets/brand/maunc-logo.png"
+            alt="MAUNC Emblem Logo"
+            className="w-6 h-6 md:w-7 md:h-7 object-contain flex-shrink-0"
+          />
           <div className="flex items-center space-x-2 flex-wrap">
-            <span className="font-extrabold tracking-wider text-sm md:text-base text-white">
+            <span className="font-extrabold tracking-wider text-xs md:text-sm text-white">
               MAUNC
             </span>
-            <span className="text-gray-400 text-xs md:text-sm font-medium">
+            <span className="text-gray-400 text-[11px] md:text-xs font-medium">
               Mechanical Autonomous Navigation Control
             </span>
           </div>
         </div>
 
         {/* Center: Subtle horizontal line */}
-        <div className="hidden lg:block flex-1 mx-6 h-[1px] bg-gradient-to-r from-maunc-yellow/50 via-gray-700 to-transparent" />
+        <div className="hidden lg:block flex-1 mx-6 h-[1px] bg-gradient-to-r from-maunc-yellow/40 via-gray-700/50 to-transparent" />
 
-        {/* Right note */}
-        <div className="text-xs text-gray-400 font-mono">
+        {/* Right: Organization Identity */}
+        <div className="text-[11px] text-gray-400 font-mono flex items-center space-x-2">
           <span>Universitas Siliwangi</span>
         </div>
       </div>
