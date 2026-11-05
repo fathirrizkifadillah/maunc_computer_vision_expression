@@ -1,0 +1,47 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: var(--maunc-border);
+  }
+  body {
+    background-color: var(--maunc-bg);
+    color: var(--maunc-black);
+    font-family: 'Outfit', sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom hazard diagonal stripes matching the footer reference */
+.hazard-stripes {
+  background: repeating-linear-gradient(
+    -45deg,
+    #FDB813,
+    #FDB813 10px,
+    #121316 10px,
+    #121316 20px
+  );
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

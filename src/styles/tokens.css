@@ -1,0 +1,15 @@
+:root {
+  --maunc-black: #121316;
+  --maunc-charcoal: #1E2127;
+  --maunc-charcoal-light: #2B303A;
+  --maunc-white: #FFFFFF;
+  --maunc-yellow: #FDB813;
+  --maunc-yellow-light: #FEE89D;
+  --maunc-yellow-dark: #D99800;
+  --maunc-metal: #5A6270;
+  --maunc-metal-light: #8A92A0;
+  --maunc-bg: #F5F7FA;
+  --maunc-border: #E2E8F0;
+  --maunc-red: #DC2626;
+  --radius-card: 1.5rem;
+}
