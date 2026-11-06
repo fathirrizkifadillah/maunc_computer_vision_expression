@@ -22,7 +22,7 @@ export class BlendshapeClassifier {
 
   /**
    * Classifies facial expression in real-time from 52 MediaPipe facial action unit blendshapes.
-   * Runs 100% locally on-device at 60 FPS without external network dependency.
+   * Runs 100% locally on-device at 60 FPS with calibrated gain scaling for subtle webcam expressions.
    */
   public classify(
     blendshapes: Record<string, number>,
@@ -36,57 +36,64 @@ export class BlendshapeClassifier {
     const smileR = b['mouthSmileRight'] || 0;
     const cheekL = b['cheekSquintLeft'] || 0;
     const cheekR = b['cheekSquintRight'] || 0;
-    const dimpleL = b['mouthDimpleLeft'] || 0;
-    const dimpleR = b['mouthDimpleRight'] || 0;
-    const avgSmile = (smileL + smileR) * 0.5;
-    const avgCheek = (cheekL + cheekR) * 0.5;
-    const avgDimple = (dimpleL + dimpleR) * 0.5;
-    const rawSenang = avgSmile * 0.70 + avgCheek * 0.20 + avgDimple * 0.10;
+    const smileScore = Math.max(smileL, smileR) * 0.6 + ((smileL + smileR) * 0.5) * 0.4;
+    const rawSenang = smileScore * 0.80 + ((cheekL + cheekR) * 0.5) * 0.20;
 
     // 2. Marah (Angry)
-    // Primary: browDownLeft/Right, mouthFrownLeft/Right; Secondary: mouthPressLeft/Right, eyeSquintLeft/Right
+    // Primary: browDownLeft/Right, mouthFrownLeft/Right; Secondary: mouthPressLeft/Right
     const browDownL = b['browDownLeft'] || 0;
     const browDownR = b['browDownRight'] || 0;
     const frownL = b['mouthFrownLeft'] || 0;
     const frownR = b['mouthFrownRight'] || 0;
     const pressL = b['mouthPressLeft'] || 0;
     const pressR = b['mouthPressRight'] || 0;
-    const eyeSquintL = b['eyeSquintLeft'] || 0;
-    const eyeSquintR = b['eyeSquintRight'] || 0;
-    const avgBrowDown = (browDownL + browDownR) * 0.5;
-    const avgFrown = (frownL + frownR) * 0.5;
-    const avgPress = (pressL + pressR) * 0.5;
-    const avgEyeSquint = (eyeSquintL + eyeSquintR) * 0.5;
-    const rawMarah = avgBrowDown * 0.55 + avgFrown * 0.25 + avgPress * 0.10 + avgEyeSquint * 0.10;
+    const browDownScore = Math.max(browDownL, browDownR) * 0.6 + ((browDownL + browDownR) * 0.5) * 0.4;
+    const frownScore = (frownL + frownR) * 0.5;
+    const pressScore = (pressL + pressR) * 0.5;
+    const rawMarah = browDownScore * 0.65 + frownScore * 0.20 + pressScore * 0.15;
 
-    // 3. Sedih (Sad)
-    // Primary: browInnerUp, mouthFrownLeft/Right; Secondary: mouthPressLeft/Right
+    // 3. Sedih (Sad / Pouting)
+    // Primary: browInnerUp (AU1), mouthFrown (AU15), mouthLowerDown (AU16), mouthShrugLower (AU17)
+    // Includes compensation for high browDown (which signifies anger, not sadness)
     const browInnerUp = b['browInnerUp'] || 0;
-    const rawSedih = browInnerUp * 0.45 + avgFrown * 0.40 + avgPress * 0.15;
+    const lowerDown = ((b['mouthLowerDownLeft'] || 0) + (b['mouthLowerDownRight'] || 0)) * 0.5;
+    const shrugLower = b['mouthShrugLower'] || 0;
+    const mouthFrown = Math.max(frownL, frownR) * 0.6 + ((frownL + frownR) * 0.5) * 0.4;
+    const mouthSad = Math.max(mouthFrown, lowerDown * 1.25, shrugLower * 1.15, (mouthFrown + shrugLower) * 0.75);
+    const browDownAvg = (browDownL + browDownR) * 0.5;
+    const angryPenalty = Math.max(0, 1 - browDownAvg * 1.4);
+    const rawSedih = (mouthSad * 0.55 + browInnerUp * 0.45) * 1.40 * angryPenalty;
 
-    // 4. Takut (Fear)
-    // Primary: eyeWideLeft/Right; Secondary: browOuterUpLeft/Right, browInnerUp
+    // 4. Takut (Fear / Scared / Shocked)
+    // Primary: eyeWideLeft/Right (AU5), browUp (AU1+2), jawOpen / mouthFunnel / mouthStretch
     const eyeWideL = b['eyeWideLeft'] || 0;
     const eyeWideR = b['eyeWideRight'] || 0;
     const browOuterUpL = b['browOuterUpLeft'] || 0;
     const browOuterUpR = b['browOuterUpRight'] || 0;
-    const avgEyeWide = (eyeWideL + eyeWideR) * 0.5;
-    const avgBrowOuterUp = (browOuterUpL + browOuterUpR) * 0.5;
-    const rawTakut = avgEyeWide * 0.55 + avgBrowOuterUp * 0.25 + browInnerUp * 0.20;
+    const eyeWide = Math.max(eyeWideL, eyeWideR) * 0.7 + ((eyeWideL + eyeWideR) * 0.5) * 0.3;
+    const browUp = Math.max(browInnerUp, (browOuterUpL + browOuterUpR) * 0.5);
+    const mouthGasp = Math.max(
+      b['jawOpen'] || 0,
+      b['mouthFunnel'] || 0,
+      ((b['mouthStretchLeft'] || 0) + (b['mouthStretchRight'] || 0)) * 0.5
+    );
+    const rawTakut = (eyeWide * 0.50 + browUp * 0.28 + mouthGasp * 0.22) * 1.35;
 
-    // 5. Sebal (Disgust / Contempt)
-    // Primary: noseSneerLeft/Right; Secondary: mouthUpperUpLeft/Right
+    // 5. Sebal (Disgust / Sneer / Contempt)
+    // Primary: noseSneerLeft/Right (AU9), mouthUpperUpLeft/Right (AU10), asymmetric sneer
     const noseSneerL = b['noseSneerLeft'] || 0;
     const noseSneerR = b['noseSneerRight'] || 0;
     const mouthUpperUpL = b['mouthUpperUpLeft'] || 0;
     const mouthUpperUpR = b['mouthUpperUpRight'] || 0;
-    const avgSneer = (noseSneerL + noseSneerR) * 0.5;
-    const avgUpperUp = (mouthUpperUpL + mouthUpperUpR) * 0.5;
-    const rawSebal = avgSneer * 0.60 + avgUpperUp * 0.40;
+    const sneer = Math.max(noseSneerL, noseSneerR) * 0.7 + ((noseSneerL + noseSneerR) * 0.5) * 0.3;
+    const upperUp = Math.max(mouthUpperUpL, mouthUpperUpR) * 0.7 + ((mouthUpperUpL + mouthUpperUpR) * 0.5) * 0.3;
+    const asymmetry = Math.abs(mouthUpperUpL - mouthUpperUpR) * 0.4;
+    const disgustBase = Math.max(sneer * 1.25, upperUp * 1.15, (sneer + upperUp) * 0.75) + asymmetry;
+    const rawSebal = disgustBase * 1.45;
 
     // 6. Netral (Neutral)
     const maxEmotionalScore = Math.max(rawSenang, rawMarah, rawSedih, rawTakut, rawSebal);
-    const rawNetral = Math.max(0, 1 - maxEmotionalScore * 1.6);
+    const rawNetral = Math.max(0, 1 - maxEmotionalScore * 1.5);
 
     const scores: Record<FinalExpression, number> = {
       senang: rawSenang,
@@ -113,27 +120,27 @@ export class BlendshapeClassifier {
     emotionalCandidates.sort((a, b) => b[1] - a[1]);
     const topCandidate = emotionalCandidates[0];
 
-    // Responsive trigger threshold: 0.19 for instant reactive detection
-    if (topCandidate[1] >= 0.19 && topCandidate[1] > rawNetral * 0.45) {
+    // Responsive trigger threshold: 0.16 for instant, natural detection on real webcams
+    if (topCandidate[1] >= 0.16) {
       chosenExpression = topCandidate[0];
       chosenScore = topCandidate[1];
     } else {
       chosenExpression = 'netral';
-      chosenScore = Math.max(0.65, Math.min(0.96, rawNetral));
+      chosenScore = Math.max(0.70, Math.min(0.96, rawNetral));
     }
 
-    // Normalized display confidence (0.68 to 0.98)
+    // Normalized display confidence (0.70 to 0.98)
     const normalizedConfidence = Math.min(
       0.98,
-      Math.max(0.68, chosenExpression === 'netral' ? 0.85 : 0.65 + chosenScore * 0.35)
+      Math.max(0.70, chosenExpression === 'netral' ? 0.85 : 0.68 + chosenScore * 0.40)
     );
 
-    // Apply temporal smoothing per trackId
+    // Apply temporal smoothing per trackId (250ms responsive window)
     let finalExpr = chosenExpression;
     let finalConf = normalizedConfidence;
 
     if (trackId !== undefined) {
-      const smoothed = this.smooth(trackId, chosenExpression, normalizedConfidence);
+      const smoothed = this.smooth(trackId, chosenExpression, normalizedConfidence, chosenScore);
       finalExpr = smoothed.expression;
       finalConf = smoothed.confidence;
     }
@@ -148,12 +155,13 @@ export class BlendshapeClassifier {
   }
 
   /**
-   * Temporal smoothing to prevent flicker while preserving instant reactivity
+   * Temporal smoothing (250ms window) with fast-path for clear active expressions
    */
   private smooth(
     trackId: number,
     expression: FinalExpression,
-    confidence: number
+    confidence: number,
+    score: number
   ): { expression: FinalExpression; confidence: number } {
     const now = Date.now();
     let history = this.smoothingMap.get(trackId);
@@ -162,9 +170,15 @@ export class BlendshapeClassifier {
       this.smoothingMap.set(trackId, history);
     }
 
-    // Keep history within last 500ms
+    // Fast-path: clear active expressions (score >= 0.26) react immediately without waiting
+    if (expression !== 'netral' && score >= 0.26) {
+      this.smoothingMap.set(trackId, [{ expression, confidence, timestamp: now }]);
+      return { expression, confidence: Number(confidence.toFixed(2)) };
+    }
+
+    // Keep history within last 250ms
     history.push({ expression, confidence, timestamp: now });
-    history = history.filter((h) => now - h.timestamp <= 500);
+    history = history.filter((h) => now - h.timestamp <= 250);
     this.smoothingMap.set(trackId, history);
 
     // Count expression occurrences

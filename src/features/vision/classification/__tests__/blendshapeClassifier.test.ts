@@ -97,4 +97,45 @@ describe('BlendshapeClassifierService', () => {
     expect(result.label).toBe('Netral');
     expect(result.confidence).toBeGreaterThanOrEqual(0.65);
   });
+
+  it('detects Sedih on realistic subtle pouting / mouth frown + chin shrug', () => {
+    const blendshapes = {
+      mouthFrownLeft: 0.28,
+      mouthFrownRight: 0.26,
+      mouthShrugLower: 0.25,
+      browInnerUp: 0.24,
+      browDownLeft: 0.02,
+      browDownRight: 0.02,
+    };
+    const result = BlendshapeClassifierService.classify(blendshapes, 7);
+    expect(result.expression).toBe('sedih');
+    expect(result.label).toBe('Sedih');
+    expect(result.confidence).toBeGreaterThanOrEqual(0.70);
+  });
+
+  it('detects Takut on realistic wide eyes with slight parted jaw / gasp', () => {
+    const blendshapes = {
+      eyeWideLeft: 0.32,
+      eyeWideRight: 0.30,
+      jawOpen: 0.25,
+      browOuterUpLeft: 0.22,
+      browOuterUpRight: 0.22,
+    };
+    const result = BlendshapeClassifierService.classify(blendshapes, 8);
+    expect(result.expression).toBe('takut');
+    expect(result.label).toBe('Takut');
+    expect(result.confidence).toBeGreaterThanOrEqual(0.70);
+  });
+
+  it('detects Sebal on realistic upper lip curling / asymmetric sneer', () => {
+    const blendshapes = {
+      noseSneerLeft: 0.24,
+      mouthUpperUpLeft: 0.28,
+      mouthUpperUpRight: 0.08,
+    };
+    const result = BlendshapeClassifierService.classify(blendshapes, 9);
+    expect(result.expression).toBe('sebal');
+    expect(result.label).toBe('Sebal');
+    expect(result.confidence).toBeGreaterThanOrEqual(0.70);
+  });
 });
