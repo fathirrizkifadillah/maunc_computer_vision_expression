@@ -31,44 +31,58 @@ export class BlendshapeClassifier {
     const b = blendshapes || {};
 
     // 1. Senang (Happy / Joy)
-    // Primary: mouthSmileLeft, mouthSmileRight; Secondary: cheekSquintLeft, cheekSquintRight
+    // Primary: mouthSmileLeft/Right; Secondary: cheekSquintLeft/Right, mouthDimpleLeft/Right
     const smileL = b['mouthSmileLeft'] || 0;
     const smileR = b['mouthSmileRight'] || 0;
     const cheekL = b['cheekSquintLeft'] || 0;
     const cheekR = b['cheekSquintRight'] || 0;
-    const rawSenang = (smileL + smileR) * 0.70 + (cheekL + cheekR) * 0.30;
+    const dimpleL = b['mouthDimpleLeft'] || 0;
+    const dimpleR = b['mouthDimpleRight'] || 0;
+    const avgSmile = (smileL + smileR) * 0.5;
+    const avgCheek = (cheekL + cheekR) * 0.5;
+    const avgDimple = (dimpleL + dimpleR) * 0.5;
+    const rawSenang = avgSmile * 0.70 + avgCheek * 0.20 + avgDimple * 0.10;
 
     // 2. Marah (Angry)
-    // Primary: browDownLeft, browDownRight; Secondary: mouthFrownLeft, mouthFrownRight, jawClench
+    // Primary: browDownLeft/Right, mouthFrownLeft/Right; Secondary: mouthPressLeft/Right, eyeSquintLeft/Right
     const browDownL = b['browDownLeft'] || 0;
     const browDownR = b['browDownRight'] || 0;
     const frownL = b['mouthFrownLeft'] || 0;
     const frownR = b['mouthFrownRight'] || 0;
-    const jawClench = b['jawClench'] || 0;
-    const rawMarah = (browDownL + browDownR) * 0.65 + (frownL + frownR) * 0.20 + jawClench * 0.15;
+    const pressL = b['mouthPressLeft'] || 0;
+    const pressR = b['mouthPressRight'] || 0;
+    const eyeSquintL = b['eyeSquintLeft'] || 0;
+    const eyeSquintR = b['eyeSquintRight'] || 0;
+    const avgBrowDown = (browDownL + browDownR) * 0.5;
+    const avgFrown = (frownL + frownR) * 0.5;
+    const avgPress = (pressL + pressR) * 0.5;
+    const avgEyeSquint = (eyeSquintL + eyeSquintR) * 0.5;
+    const rawMarah = avgBrowDown * 0.55 + avgFrown * 0.25 + avgPress * 0.10 + avgEyeSquint * 0.10;
 
     // 3. Sedih (Sad)
-    // Primary: mouthFrownLeft, mouthFrownRight, browInnerUp; Secondary: mouthPressLeft, mouthPressRight
+    // Primary: browInnerUp, mouthFrownLeft/Right; Secondary: mouthPressLeft/Right
     const browInnerUp = b['browInnerUp'] || 0;
-    const mouthPressL = b['mouthPressLeft'] || 0;
-    const mouthPressR = b['mouthPressRight'] || 0;
-    const rawSedih = (frownL + frownR) * 0.50 + browInnerUp * 0.35 + (mouthPressL + mouthPressR) * 0.15;
+    const rawSedih = browInnerUp * 0.45 + avgFrown * 0.40 + avgPress * 0.15;
 
     // 4. Takut (Fear)
-    // Primary: eyeWideLeft, eyeWideRight; Secondary: browOuterUpLeft, browOuterUpRight
+    // Primary: eyeWideLeft/Right; Secondary: browOuterUpLeft/Right, browInnerUp
     const eyeWideL = b['eyeWideLeft'] || 0;
     const eyeWideR = b['eyeWideRight'] || 0;
     const browOuterUpL = b['browOuterUpLeft'] || 0;
     const browOuterUpR = b['browOuterUpRight'] || 0;
-    const rawTakut = (eyeWideL + eyeWideR) * 0.70 + (browOuterUpL + browOuterUpR) * 0.30;
+    const avgEyeWide = (eyeWideL + eyeWideR) * 0.5;
+    const avgBrowOuterUp = (browOuterUpL + browOuterUpR) * 0.5;
+    const rawTakut = avgEyeWide * 0.55 + avgBrowOuterUp * 0.25 + browInnerUp * 0.20;
 
     // 5. Sebal (Disgust / Contempt)
-    // Primary: noseSneerLeft, noseSneerRight; Secondary: mouthUpperUpLeft, mouthUpperUpRight
+    // Primary: noseSneerLeft/Right; Secondary: mouthUpperUpLeft/Right
     const noseSneerL = b['noseSneerLeft'] || 0;
     const noseSneerR = b['noseSneerRight'] || 0;
     const mouthUpperUpL = b['mouthUpperUpLeft'] || 0;
     const mouthUpperUpR = b['mouthUpperUpRight'] || 0;
-    const rawSebal = (noseSneerL + noseSneerR) * 0.60 + (mouthUpperUpL + mouthUpperUpR) * 0.40;
+    const avgSneer = (noseSneerL + noseSneerR) * 0.5;
+    const avgUpperUp = (mouthUpperUpL + mouthUpperUpR) * 0.5;
+    const rawSebal = avgSneer * 0.60 + avgUpperUp * 0.40;
 
     // 6. Netral (Neutral)
     const maxEmotionalScore = Math.max(rawSenang, rawMarah, rawSedih, rawTakut, rawSebal);
@@ -99,8 +113,8 @@ export class BlendshapeClassifier {
     emotionalCandidates.sort((a, b) => b[1] - a[1]);
     const topCandidate = emotionalCandidates[0];
 
-    // Responsive trigger threshold: 0.22 for active expression detection
-    if (topCandidate[1] >= 0.22 && topCandidate[1] > rawNetral * 0.5) {
+    // Responsive trigger threshold: 0.19 for instant reactive detection
+    if (topCandidate[1] >= 0.19 && topCandidate[1] > rawNetral * 0.45) {
       chosenExpression = topCandidate[0];
       chosenScore = topCandidate[1];
     } else {
