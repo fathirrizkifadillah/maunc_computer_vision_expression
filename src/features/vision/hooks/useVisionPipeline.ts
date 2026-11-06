@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { CameraManager, CameraStatus } from '../camera/CameraManager';
 import { FaceDetectorService } from '../detection/FaceDetector';
 import { ExpressionClassifierService } from '../classification/ExpressionClassifier';
+import { BlendshapeClassifierService } from '../classification/BlendshapeClassifier';
 import { FaceTracker } from '../tracking/FaceTracker';
 import { DetectedFace, VisionPipelineStatus } from '../types';
 
@@ -24,8 +25,6 @@ export function useVisionPipeline(options: UseVisionPipelineOptions = {}) {
   const trackerRef = useRef<FaceTracker>(new FaceTracker({ maxFaces: 3 }));
   const isLoopRunningRef = useRef<boolean>(false);
   const animationFrameIdRef = useRef<number | null>(null);
-  const lastClassifyTimeRef = useRef<number>(0);
-  const isClassifyingRef = useRef<boolean>(false);
 
   // Initialize AI models
   useEffect(() => {
@@ -84,38 +83,26 @@ export function useVisionPipeline(options: UseVisionPipelineOptions = {}) {
 
       // 1. Run Face Detection
       const detectionResult = FaceDetectorService.detect(video, now);
-      const rawDetections = detectionResult.boxes.map((box) => ({ box }));
+      const rawDetections = detectionResult.boxes.map((box, idx) => ({
+        box,
+        blendshapes: detectionResult.blendshapes[idx],
+      }));
 
       // 2. Update Face Tracker (max 3 faces)
       const trackedFaces = trackerRef.current.update(rawDetections, Date.now());
 
-      // 3. Cadenced Emotion Classification (runs async without blocking UI)
-      if (
-        !isClassifyingRef.current &&
-        now - lastClassifyTimeRef.current >= classificationIntervalMs &&
-        trackedFaces.length > 0 &&
-        ExpressionClassifierService.isLoaded()
-      ) {
-        isClassifyingRef.current = true;
-        lastClassifyTimeRef.current = now;
-
-        // Classify each active face
-        const activeFacesToClassify = trackedFaces.filter((f) => f.status === 'active');
-        Promise.all(
-          activeFacesToClassify.map(async (face) => {
-            const result = await ExpressionClassifierService.classifyFace(video, face.box, face.trackId);
-            trackerRef.current.updateExpression(
-              face.trackId,
-              result.expression,
-              result.label,
-              result.rawLabel,
-              result.confidence
-            );
-          })
-        ).finally(() => {
-          isClassifyingRef.current = false;
-        });
-      }
+      // 3. Instant Real-Time Emotion Classification via On-Device Blendshapes
+      const activeFaces = trackedFaces.filter((f) => f.status === 'active');
+      activeFaces.forEach((face) => {
+        const result = BlendshapeClassifierService.classify(face.blendshapes || {}, face.trackId);
+        trackerRef.current.updateExpression(
+          face.trackId,
+          result.expression,
+          result.label,
+          result.rawLabel,
+          result.confidence
+        );
+      });
 
       setFaces([...trackedFaces]);
     }

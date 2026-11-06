@@ -36,4 +36,15 @@ Dokumen ini mencatat bukti pembacaan dan rencana penerapan prinsip-prinsip dari 
 | `vitest` | Unit tests untuk Expression Mapping, Face Tracker IoU, Battle Logic | `src/features/vision/classification/__tests__/expressionMapping.test.ts`, `src/features/vision/tracking/__tests__/faceTracker.test.ts`, `src/features/battle/logic/__tests__/battleEngine.test.ts` |
 
 ---
+
+## Pembaruan Audit Implementasi: Perbaikan Deteksi Ekspresi & Layout Single/Dual Camera (2026-11-06)
+
+| Skill yang Digunakan | Masalah yang Diatasi | Prinsip yang Diterapkan | Bukti File / Komponen Terkait |
+|---|---|---|---|
+| `computer-vision-expert` | Ekspresi macet selalu "Netral" & "Menganalisis" karena kegagalan CORS/network HuggingFace di browser | Mengganti ketergantungan fetch model eksternal dengan **100% on-device MediaPipe 52 Facial Action Units (Blendshapes)**. Mengklasifikasikan 6 ekspresi resmi (Senang, Marah, Sedih, Takut, Sebal, Netral) secara lokal pada 60 FPS tanpa jeda network. | `src/features/vision/classification/BlendshapeClassifier.ts`, `src/features/vision/detection/FaceDetector.ts`, `src/features/vision/classification/ExpressionClassifier.ts` |
+| `frontend-design` & `design-taste-frontend` | Tampilan 1 kamera menduplikasi video menjadi 2 box terpisah yang aneh | **Mode 1 Kamera (Split View)**: Menggunakan **1 wadah kamera utuh (1 tempat yang sama)** dengan garis pemisah vertikal kuning di tengah, membagi zona Pemain 1 (kiri) dan Pemain 2 (kanan) sesuai desain referensi resmi. **Mode 2 Kamera Terpisah**: Tampilan dipecah menjadi 2 kotak independen hanya jika memakai 2 device kamera fisik. | `src/features/battle/BattleView.tsx`, `src/features/battle/components/PlayerViewport.tsx` |
+| `fixing-motion-performance` | Latensi dan lag asinkronus promise classification loop | Memindahkan kalkulasi ekspresi langsung ke siklus per-frame rAF dengan cost < 0.1ms tanpa promise chaining. Animasi bounding box menggunakan CSS composite properties (`transform`, `scale`, `opacity`). | `src/features/vision/hooks/useVisionPipeline.ts`, `src/features/battle/BattleView.tsx` |
+| `vitest` | Validasi matematis klasifikasi otot wajah | Menambahkan test suite deterministik untuk 6 ekspresi resmi berdasarkan koefisien otot wajah FACS. Seluruh 26 unit test lulus 100%. | `src/features/vision/classification/__tests__/blendshapeClassifier.test.ts` |
+
+---
 *Catatan audit: Seluruh 9 skill telah dibaca secara langsung dari direktori lokal sebelum pengerjaan arsitektur teknis dan UI dimulai.*

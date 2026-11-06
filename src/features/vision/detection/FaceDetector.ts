@@ -80,21 +80,25 @@ export class FaceDetector {
 
   public detect(video: HTMLVideoElement, timestamp: number = performance.now()): {
     boxes: BoundingBox[];
+    blendshapes: Record<string, number>[];
     rawResult: FaceLandmarkerResult | null;
   } {
     if (!this.landmarker || !this.isReady || video.readyState < 2) {
-      return { boxes: [], rawResult: null };
+      return { boxes: [], blendshapes: [], rawResult: null };
     }
 
     try {
       const result = this.landmarker.detectForVideo(video, timestamp);
       const boxes: BoundingBox[] = [];
+      const blendshapes: Record<string, number>[] = [];
 
       if (result && result.faceLandmarks) {
         // Limit strictly to 3 faces
         const faces = result.faceLandmarks.slice(0, 3);
+        const rawBlendshapes = result.faceBlendshapes ? result.faceBlendshapes.slice(0, 3) : [];
 
-        for (const landmarks of faces) {
+        for (let i = 0; i < faces.length; i++) {
+          const landmarks = faces[i];
           let minX = 1;
           let minY = 1;
           let maxX = 0;
@@ -120,12 +124,20 @@ export class FaceDetector {
           const height = Math.min(1 - y, rawHeight + marginY * 2);
 
           boxes.push({ x, y, width, height });
+
+          const bMap: Record<string, number> = {};
+          if (rawBlendshapes[i] && rawBlendshapes[i].categories) {
+            for (const cat of rawBlendshapes[i].categories) {
+              bMap[cat.categoryName] = cat.score;
+            }
+          }
+          blendshapes.push(bMap);
         }
       }
 
-      return { boxes, rawResult: result };
+      return { boxes, blendshapes, rawResult: result };
     } catch {
-      return { boxes: [], rawResult: null };
+      return { boxes: [], blendshapes: [], rawResult: null };
     }
   }
 

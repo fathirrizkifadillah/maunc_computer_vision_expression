@@ -2,6 +2,7 @@ import { BoundingBox, DetectedFace } from '../types';
 
 export interface RawDetection {
   box: BoundingBox;
+  blendshapes?: Record<string, number>;
 }
 
 export interface TrackerOptions {
@@ -118,6 +119,7 @@ export class FaceTracker {
           width: track.box.width * 0.3 + det.box.width * 0.7,
           height: track.box.height * 0.3 + det.box.height * 0.7,
         };
+        track.blendshapes = det.blendshapes;
         track.status = 'active';
         track.missingFrames = 0;
         track.lastSeen = timestamp;
@@ -146,6 +148,7 @@ export class FaceTracker {
           trackId,
           faceId: `Face ID 0${slot}`,
           box: { ...validDetections[i].box },
+          blendshapes: validDetections[i].blendshapes,
           expression: 'netral',
           expressionLabel: 'Menganalisis',
           rawModelLabel: '',

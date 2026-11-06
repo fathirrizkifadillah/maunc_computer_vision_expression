@@ -1,11 +1,23 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { RotateCcw, Users, AlertCircle, Sliders, Camera, SplitSquareVertical } from 'lucide-react';
+import {
+  RotateCcw,
+  Users,
+  AlertCircle,
+  AlertTriangle,
+  Sliders,
+  Camera,
+  SplitSquareVertical,
+  UserPlus,
+  Edit3,
+  CheckCircle2,
+  Trophy,
+} from 'lucide-react';
 import { BattleState } from './types';
 import { BATTLE_CONFIG, pickRandomExpression, countFacesInZones, evaluateExpressionMatch } from './logic/battleEngine';
 import { CameraManager, CameraSettings } from '../vision/camera/CameraManager';
 import { FaceDetectorService } from '../vision/detection/FaceDetector';
-import { ExpressionClassifierService } from '../vision/classification/ExpressionClassifier';
+import { BlendshapeClassifierService } from '../vision/classification/BlendshapeClassifier';
 import { PlayerViewport } from './components/PlayerViewport';
 import { PlayerRegistrationModal } from './components/PlayerRegistrationModal';
 import { TargetExpressionCard } from './components/TargetExpressionCard';
@@ -74,8 +86,6 @@ export const BattleView: React.FC = () => {
   const consecutiveMatchRef = useRef<{ p1: number; p2: number }>({ p1: 0, p2: 0 });
   const isLoopRunningRef = useRef<boolean>(false);
   const animFrameRef = useRef<number | null>(null);
-  const lastClassifyTimeRef = useRef<number>(0);
-  const isClassifyingRef = useRef<boolean>(false);
 
   // Subscribe to CameraManager
   useEffect(() => {
@@ -109,6 +119,10 @@ export const BattleView: React.FC = () => {
         const stream = await CameraManager.startCamera(settings.singleDeviceId);
         setStreamP1(stream);
         setStreamP2(stream);
+        if (videoSharedRef.current) {
+          videoSharedRef.current.srcObject = stream;
+          videoSharedRef.current.play().catch(() => {});
+        }
       }
       setIsCameraActive(true);
     } catch (err) {
@@ -145,14 +159,16 @@ export const BattleView: React.FC = () => {
         const resP1 = FaceDetectorService.detect(vidP1, now);
         countP1 = resP1.boxes.length;
         if (resP1.boxes.length === 1) {
+          const bRes = BlendshapeClassifierService.classify(resP1.blendshapes[0] || {}, 101);
           detectedP1 = {
             trackId: 101,
             faceId: 'P1',
             box: resP1.boxes[0],
-            expression: p1Face?.expression ?? 'netral',
-            expressionLabel: p1Face?.expressionLabel ?? 'Menganalisis',
-            rawModelLabel: p1Face?.rawModelLabel ?? '',
-            confidence: p1Face?.confidence ?? 0,
+            blendshapes: resP1.blendshapes[0],
+            expression: bRes.expression,
+            expressionLabel: bRes.label,
+            rawModelLabel: bRes.rawLabel,
+            confidence: bRes.confidence,
             status: 'active',
             missingFrames: 0,
             lastSeen: Date.now(),
@@ -166,14 +182,16 @@ export const BattleView: React.FC = () => {
         const resP2 = FaceDetectorService.detect(vidP2, now + 1);
         countP2 = resP2.boxes.length;
         if (resP2.boxes.length === 1) {
+          const bRes = BlendshapeClassifierService.classify(resP2.blendshapes[0] || {}, 102);
           detectedP2 = {
             trackId: 102,
             faceId: 'P2',
             box: resP2.boxes[0],
-            expression: p2Face?.expression ?? 'netral',
-            expressionLabel: p2Face?.expressionLabel ?? 'Menganalisis',
-            rawModelLabel: p2Face?.rawModelLabel ?? '',
-            confidence: p2Face?.confidence ?? 0,
+            blendshapes: resP2.blendshapes[0],
+            expression: bRes.expression,
+            expressionLabel: bRes.label,
+            rawModelLabel: bRes.rawLabel,
+            confidence: bRes.confidence,
             status: 'active',
             missingFrames: 0,
             lastSeen: Date.now(),
@@ -184,73 +202,27 @@ export const BattleView: React.FC = () => {
       setZoneCounts({ p1: countP1, p2: countP2 });
       setP1Face(detectedP1);
       setP2Face(detectedP2);
-
-      // 3. Cadenced Emotion Classification for Dual Mode
-      if (
-        !isClassifyingRef.current &&
-        now - lastClassifyTimeRef.current >= 150 &&
-        ExpressionClassifierService.isLoaded()
-      ) {
-        isClassifyingRef.current = true;
-        lastClassifyTimeRef.current = now;
-
-        const tasks: Promise<void>[] = [];
-        if (detectedP1 && vidP1) {
-          tasks.push(
-            ExpressionClassifierService.classifyFace(vidP1, detectedP1.box, 101).then((res) => {
-              setP1Face((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      expression: res.expression,
-                      expressionLabel: res.label,
-                      rawModelLabel: res.rawLabel,
-                      confidence: res.confidence,
-                    }
-                  : null
-              );
-            })
-          );
-        }
-        if (detectedP2 && vidP2) {
-          tasks.push(
-            ExpressionClassifierService.classifyFace(vidP2, detectedP2.box, 102).then((res) => {
-              setP2Face((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      expression: res.expression,
-                      expressionLabel: res.label,
-                      rawModelLabel: res.rawLabel,
-                      confidence: res.confidence,
-                    }
-                  : null
-              );
-            })
-          );
-        }
-
-        Promise.all(tasks).finally(() => {
-          isClassifyingRef.current = false;
-        });
-      }
     } else {
       // --- SINGLE CAMERA MODE (1 shared webcam split into Left & Right) ---
-      const vidShared = videoP1Ref.current || videoSharedRef.current;
+      const vidShared = videoSharedRef.current || videoP1Ref.current;
       if (vidShared && vidShared.readyState >= 2 && !vidShared.paused) {
         const res = FaceDetectorService.detect(vidShared, now);
-        const rawFaces: DetectedFace[] = res.boxes.map((box, idx) => ({
-          trackId: idx + 1,
-          faceId: `Face ${idx + 1}`,
-          box,
-          expression: 'netral',
-          expressionLabel: 'Menganalisis',
-          rawModelLabel: '',
-          confidence: 0,
-          status: 'active',
-          missingFrames: 0,
-          lastSeen: Date.now(),
-        }));
+        const rawFaces: DetectedFace[] = res.boxes.map((box, idx) => {
+          const bRes = BlendshapeClassifierService.classify(res.blendshapes[idx] || {}, idx + 1);
+          return {
+            trackId: idx + 1,
+            faceId: `Face ${idx + 1}`,
+            box,
+            blendshapes: res.blendshapes[idx],
+            expression: bRes.expression,
+            expressionLabel: bRes.label,
+            rawModelLabel: bRes.rawLabel,
+            confidence: bRes.confidence,
+            status: 'active',
+            missingFrames: 0,
+            lastSeen: Date.now(),
+          };
+        });
 
         const { p1Faces, p2Faces } = countFacesInZones(rawFaces, true);
         setZoneCounts({ p1: p1Faces.length, p2: p2Faces.length });
@@ -260,60 +232,11 @@ export const BattleView: React.FC = () => {
 
         setP1Face(validP1);
         setP2Face(validP2);
-
-        // Classification in single mode
-        if (
-          !isClassifyingRef.current &&
-          now - lastClassifyTimeRef.current >= 150 &&
-          ExpressionClassifierService.isLoaded()
-        ) {
-          isClassifyingRef.current = true;
-          lastClassifyTimeRef.current = now;
-
-          const tasks: Promise<void>[] = [];
-          if (validP1) {
-            tasks.push(
-              ExpressionClassifierService.classifyFace(vidShared, validP1.box, 1).then((r) => {
-                setP1Face((p) =>
-                  p
-                    ? {
-                        ...p,
-                        expression: r.expression,
-                        expressionLabel: r.label,
-                        rawModelLabel: r.rawLabel,
-                        confidence: r.confidence,
-                      }
-                    : null
-                );
-              })
-            );
-          }
-          if (validP2) {
-            tasks.push(
-              ExpressionClassifierService.classifyFace(vidShared, validP2.box, 2).then((r) => {
-                setP2Face((p) =>
-                  p
-                    ? {
-                        ...p,
-                        expression: r.expression,
-                        expressionLabel: r.label,
-                        rawModelLabel: r.rawLabel,
-                        confidence: r.confidence,
-                      }
-                    : null
-                );
-              })
-            );
-          }
-          Promise.all(tasks).finally(() => {
-            isClassifyingRef.current = false;
-          });
-        }
       }
     }
 
     animFrameRef.current = requestAnimationFrame(runBattleVisionLoop);
-  }, [p1Face?.expression, p1Face?.expressionLabel, p1Face?.rawModelLabel, p1Face?.confidence, p2Face?.expression, p2Face?.expressionLabel, p2Face?.rawModelLabel, p2Face?.confidence]);
+  }, []);
 
   // Activate / stop vision loop
   useEffect(() => {
@@ -589,32 +512,280 @@ export const BattleView: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative items-stretch h-full min-h-0">
-          {/* Vertical Yellow Divider in center (Desktop) */}
-          <div className="hidden md:block absolute left-1/2 top-2 bottom-2 w-1.5 bg-maunc-yellow -translate-x-1/2 rounded-full z-20 shadow-sm" />
+        {/* Arena Body: Mode 1 Kamera (Unified Split Screen) vs Mode 2 Kamera (2 Separate Boxes) */}
+        {cameraSettings.mode === 'single' ? (
+          /* SINGLE CAMERA ARENA: ONE CONTINUOUS CONTAINER SPLIT BY CENTER YELLOW DIVIDER */
+          <div className="relative w-full h-full min-h-0 bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-xl flex items-center justify-center select-none group">
+            {/* Cyber Corner Brackets [ ] on outer 4 corners */}
+            <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gray-700/60 rounded-tl-lg pointer-events-none z-20" />
+            <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gray-700/60 rounded-tr-lg pointer-events-none z-20" />
+            <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-gray-700/60 rounded-bl-lg pointer-events-none z-20" />
+            <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-gray-700/60 rounded-br-lg pointer-events-none z-20" />
 
-          {/* Left: Player 1 Viewport */}
-          <PlayerViewport
-            player={battleState.p1}
-            detectedFace={p1Face}
-            isStreaming={isCameraActive}
-            onOpenRegister={() => setRegisteringPlayerId(1)}
-            zoneFaceCount={zoneCounts.p1}
-            stream={streamP1}
-            videoRef={videoP1Ref}
-          />
+            {/* Continuous Video Feed across whole arena */}
+            {isCameraActive && (
+              <video
+                ref={(node) => {
+                  if (node) {
+                    videoSharedRef.current = node;
+                    if (streamP1 && node.srcObject !== streamP1) {
+                      node.srcObject = streamP1;
+                      node.play().catch(() => {});
+                    }
+                  }
+                }}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover scale-x-[-1]"
+              />
+            )}
 
-          {/* Right: Player 2 Viewport */}
-          <PlayerViewport
-            player={battleState.p2}
-            detectedFace={p2Face}
-            isStreaming={isCameraActive}
-            onOpenRegister={() => setRegisteringPlayerId(2)}
-            zoneFaceCount={zoneCounts.p2}
-            stream={streamP2}
-            videoRef={videoP2Ref}
-          />
-        </div>
+            {/* Vertical Golden Center Divider Line */}
+            <div className="absolute left-1/2 top-2 bottom-2 w-1.5 -translate-x-1/2 bg-maunc-yellow rounded-full z-20 pointer-events-none shadow-glow-yellow" />
+
+            {/* LEFT ZONE: Player 1 */}
+            <div className="absolute left-0 top-0 bottom-0 w-1/2 z-20 pointer-events-none overflow-hidden">
+              {!battleState.p1.isRegistered ? (
+                /* Unregistered State for Player 1 */
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-white bg-black/60 backdrop-blur-sm pointer-events-auto animate-fade-in">
+                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2 text-maunc-yellow">
+                    <UserPlus className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white mb-1">
+                    Player 1
+                  </h3>
+                  <p className="text-gray-400 text-xs mb-4">
+                    Daftarkan nama untuk memulai
+                  </p>
+                  <button
+                    onClick={() => setRegisteringPlayerId(1)}
+                    className="flex items-center space-x-2 px-5 py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-xs transition-all shadow-glow-yellow active:scale-95 cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Daftar / Ganti Nama</span>
+                  </button>
+                </div>
+              ) : (
+                /* Registered State for Player 1 */
+                <>
+                  {/* Top-Left Name & Ready Status Pill */}
+                  <div className="absolute top-4 left-4 flex items-center space-x-2 pointer-events-auto">
+                    <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
+                      <span className="text-white text-xs md:text-sm font-bold tracking-wide">
+                        {battleState.p1.name}
+                      </span>
+                      <button
+                        onClick={() => setRegisteringPlayerId(1)}
+                        className="text-gray-400 hover:text-maunc-yellow transition-colors ml-1 cursor-pointer"
+                        title="Ubah Nama"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Status Pill */}
+                    {zoneCounts.p1 > 1 ? (
+                      <div className="flex items-center space-x-1.5 bg-red-950/80 border border-red-500/50 text-red-200 text-xs px-3 py-1 rounded-full">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                        <span>Area Penuh (&gt;1 wajah)</span>
+                      </div>
+                    ) : battleState.p1.isReady ? (
+                      <div className="flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs px-3 py-1 rounded-full">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Siap</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1.5 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-xs px-3 py-1 rounded-full">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                        <span>Mencari Wajah...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bottom-Left Detected Expression Pill */}
+                  {p1Face && isCameraActive && (
+                    <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs text-white border border-white/10 flex items-center space-x-2 pointer-events-auto">
+                      <span className="text-gray-400">Ekspresi:</span>
+                      <span className="font-bold text-maunc-yellow">
+                        {p1Face.expressionLabel || 'Netral'}
+                      </span>
+                      <span className="text-gray-400">
+                        ({Math.round((p1Face.confidence || 0) * 100)}%)
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Round Win Overlay for Player 1 */}
+                  {battleState.p1.result === 'won' && (
+                    <div className="absolute inset-0 z-30 bg-emerald-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-emerald-500">
+                      <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-2 text-maunc-yellow animate-bounce">
+                        <Trophy className="w-8 h-8" />
+                      </div>
+                      <h2 className="text-3xl md:text-4xl font-black text-emerald-300 tracking-wider mb-1">
+                        MENANG!
+                      </h2>
+                      <p className="text-sm font-semibold text-white">{battleState.p1.name}</p>
+                    </div>
+                  )}
+                  {battleState.p1.result === 'lost' && (
+                    <div className="absolute inset-0 z-30 bg-red-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-red-400 tracking-wider mb-1">
+                        KALAH
+                      </h2>
+                      <p className="text-xs text-gray-300">{battleState.p1.name}</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* RIGHT ZONE: Player 2 */}
+            <div className="absolute right-0 top-0 bottom-0 w-1/2 z-20 pointer-events-none overflow-hidden">
+              {!battleState.p2.isRegistered ? (
+                /* Unregistered State for Player 2 */
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-white bg-black/60 backdrop-blur-sm pointer-events-auto animate-fade-in">
+                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2 text-maunc-yellow">
+                    <UserPlus className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white mb-1">
+                    Player 2
+                  </h3>
+                  <p className="text-gray-400 text-xs mb-4">
+                    Daftarkan nama untuk memulai
+                  </p>
+                  <button
+                    onClick={() => setRegisteringPlayerId(2)}
+                    className="flex items-center space-x-2 px-5 py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-xs transition-all shadow-glow-yellow active:scale-95 cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Daftar / Ganti Nama</span>
+                  </button>
+                </div>
+              ) : (
+                /* Registered State for Player 2 */
+                <>
+                  {/* Top-Right Name & Ready Status Pill */}
+                  <div className="absolute top-4 right-4 flex items-center space-x-2 pointer-events-auto">
+                    {/* Status Pill */}
+                    {zoneCounts.p2 > 1 ? (
+                      <div className="flex items-center space-x-1.5 bg-red-950/80 border border-red-500/50 text-red-200 text-xs px-3 py-1 rounded-full">
+                        <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                        <span>Area Penuh (&gt;1 wajah)</span>
+                      </div>
+                    ) : battleState.p2.isReady ? (
+                      <div className="flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs px-3 py-1 rounded-full">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Siap</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1.5 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-xs px-3 py-1 rounded-full">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                        <span>Mencari Wajah...</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
+                      <span className="text-white text-xs md:text-sm font-bold tracking-wide">
+                        {battleState.p2.name}
+                      </span>
+                      <button
+                        onClick={() => setRegisteringPlayerId(2)}
+                        className="text-gray-400 hover:text-maunc-yellow transition-colors ml-1 cursor-pointer"
+                        title="Ubah Nama"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bottom-Right Detected Expression Pill */}
+                  {p2Face && isCameraActive && (
+                    <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs text-white border border-white/10 flex items-center space-x-2 pointer-events-auto">
+                      <span className="text-gray-400">Ekspresi:</span>
+                      <span className="font-bold text-maunc-yellow">
+                        {p2Face.expressionLabel || 'Netral'}
+                      </span>
+                      <span className="text-gray-400">
+                        ({Math.round((p2Face.confidence || 0) * 100)}%)
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Round Win Overlay for Player 2 */}
+                  {battleState.p2.result === 'won' && (
+                    <div className="absolute inset-0 z-30 bg-emerald-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-emerald-500">
+                      <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-2 text-maunc-yellow animate-bounce">
+                        <Trophy className="w-8 h-8" />
+                      </div>
+                      <h2 className="text-3xl md:text-4xl font-black text-emerald-300 tracking-wider mb-1">
+                        MENANG!
+                      </h2>
+                      <p className="text-sm font-semibold text-white">{battleState.p2.name}</p>
+                    </div>
+                  )}
+                  {battleState.p2.result === 'lost' && (
+                    <div className="absolute inset-0 z-30 bg-red-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-red-400 tracking-wider mb-1">
+                        KALAH
+                      </h2>
+                      <p className="text-xs text-gray-300">{battleState.p2.name}</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Real-time Bounding Boxes Over Unified Video */}
+            {isCameraActive && p1Face && battleState.p1.isRegistered && (
+              <div
+                className="absolute border-2 border-maunc-yellow rounded-2xl pointer-events-none transition-all duration-75 z-10"
+                style={{
+                  left: `${(1 - p1Face.box.x - p1Face.box.width) * 100}%`,
+                  top: `${p1Face.box.y * 100}%`,
+                  width: `${p1Face.box.width * 100}%`,
+                  height: `${p1Face.box.height * 100}%`,
+                }}
+              />
+            )}
+            {isCameraActive && p2Face && battleState.p2.isRegistered && (
+              <div
+                className="absolute border-2 border-maunc-yellow rounded-2xl pointer-events-none transition-all duration-75 z-10"
+                style={{
+                  left: `${(1 - p2Face.box.x - p2Face.box.width) * 100}%`,
+                  top: `${p2Face.box.y * 100}%`,
+                  width: `${p2Face.box.width * 100}%`,
+                  height: `${p2Face.box.height * 100}%`,
+                }}
+              />
+            )}
+          </div>
+        ) : (
+          /* DUAL CAMERA ARENA: 2 SEPARATE PHYSICAL VIEWPORTS SIDE-BY-SIDE */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative items-stretch h-full min-h-0">
+            {/* Left: Player 1 Viewport */}
+            <PlayerViewport
+              player={battleState.p1}
+              detectedFace={p1Face}
+              isStreaming={isCameraActive}
+              onOpenRegister={() => setRegisteringPlayerId(1)}
+              zoneFaceCount={zoneCounts.p1}
+              stream={streamP1}
+              videoRef={videoP1Ref}
+            />
+
+            {/* Right: Player 2 Viewport */}
+            <PlayerViewport
+              player={battleState.p2}
+              detectedFace={p2Face}
+              isStreaming={isCameraActive}
+              onOpenRegister={() => setRegisteringPlayerId(2)}
+              zoneFaceCount={zoneCounts.p2}
+              stream={streamP2}
+              videoRef={videoP2Ref}
+            />
+          </div>
+        )}
 
         {/* Global Warning Banner if Camera Error */}
         {cameraError && (

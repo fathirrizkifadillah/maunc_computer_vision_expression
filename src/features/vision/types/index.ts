@@ -36,6 +36,8 @@ export interface DetectedFace {
   missingFrames: number;
   /** Timestamp of last active frame */
   lastSeen: number;
+  /** Facial action unit blendshapes */
+  blendshapes?: Record<string, number>;
 }
 
 export interface ExpressionConfig {
