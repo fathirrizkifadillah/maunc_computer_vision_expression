@@ -138,4 +138,34 @@ describe('BlendshapeClassifierService', () => {
     expect(result.label).toBe('Sebal');
     expect(result.confidence).toBeGreaterThanOrEqual(0.70);
   });
+
+  it('detects Sedih on pure mouth cemberut without inner brow raising', () => {
+    const blendshapes = {
+      mouthFrownLeft: 0.32,
+      mouthFrownRight: 0.32,
+      mouthPressLeft: 0.25,
+      mouthPressRight: 0.25,
+      jawOpen: 0.02,
+      browInnerUp: 0.0,
+      browDownLeft: 0.05,
+      browDownRight: 0.05,
+    };
+    const result = BlendshapeClassifierService.classify(blendshapes, 10);
+    expect(result.expression).toBe('sedih');
+    expect(result.label).toBe('Sedih');
+    expect(result.confidence).toBeGreaterThanOrEqual(0.70);
+  });
+
+  it('does NOT misclassify sticking tongue out / melet (open jaw) as sedih', () => {
+    const blendshapes = {
+      jawOpen: 0.55,
+      mouthLowerDownLeft: 0.70,
+      mouthLowerDownRight: 0.70,
+      mouthFrownLeft: 0.05,
+      mouthFrownRight: 0.05,
+      browInnerUp: 0.05,
+    };
+    const result = BlendshapeClassifierService.classify(blendshapes, 11);
+    expect(result.expression).not.toBe('sedih');
+  });
 });

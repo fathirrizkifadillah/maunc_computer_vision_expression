@@ -52,32 +52,42 @@ export class BlendshapeClassifier {
     const pressScore = (pressL + pressR) * 0.5;
     const rawMarah = browDownScore * 0.65 + frownScore * 0.20 + pressScore * 0.15;
 
-    // 3. Sedih (Sad / Pouting)
-    // Primary: browInnerUp (AU1), mouthFrown (AU15), mouthLowerDown (AU16), mouthShrugLower (AU17)
-    // Includes compensation for high browDown (which signifies anger, not sadness)
-    const browInnerUp = b['browInnerUp'] || 0;
-    const lowerDown = ((b['mouthLowerDownLeft'] || 0) + (b['mouthLowerDownRight'] || 0)) * 0.5;
-    const shrugLower = b['mouthShrugLower'] || 0;
-    const mouthFrown = Math.max(frownL, frownR) * 0.6 + ((frownL + frownR) * 0.5) * 0.4;
-    const mouthSad = Math.max(mouthFrown, lowerDown * 1.25, shrugLower * 1.15, (mouthFrown + shrugLower) * 0.75);
+    // 3. Sedih (Sad / Pouting / Cemberut)
+    // Primary: mouthFrownLeft/Right (AU15), mouthShrugLower (AU17), mouthPress (AU24), browInnerUp (AU1)
+    // Note: Sadness requires closed or nearly-closed mouth. Sticking tongue out (melet) has open jaw, so it is penalized.
+    const mouthFrown = Math.max(frownL, frownR) * 0.70 + ((frownL + frownR) * 0.5) * 0.30;
+    const mouthPout = Math.max(
+      b['mouthShrugLower'] || 0,
+      ((b['mouthPressLeft'] || 0) + (b['mouthPressRight'] || 0)) * 0.5,
+      b['mouthRollLower'] || 0
+    );
+    // Standalone mouth sadness: frown or chin pouting triggers sadness naturally
+    const mouthSadness = Math.max(mouthFrown * 1.35, (mouthFrown + mouthPout) * 0.90);
+    const browSadness = b['browInnerUp'] || 0;
+    const jawOpen = b['jawOpen'] || 0;
+    const openJawPenalty = Math.max(0, 1 - jawOpen * 3.5);
     const browDownAvg = (browDownL + browDownR) * 0.5;
-    const angryPenalty = Math.max(0, 1 - browDownAvg * 1.4);
-    const rawSedih = (mouthSad * 0.55 + browInnerUp * 0.45) * 1.40 * angryPenalty;
+    const heavyAngryPenalty = browDownAvg > 0.40 ? Math.max(0.2, 1 - (browDownAvg - 0.40) * 2.5) : 1.0;
+    const rawSedih = Math.max(mouthSadness, mouthSadness * 0.6 + browSadness * 0.6, browSadness * 1.2)
+      * openJawPenalty
+      * heavyAngryPenalty;
 
     // 4. Takut (Fear / Scared / Shocked)
-    // Primary: eyeWideLeft/Right (AU5), browUp (AU1+2), jawOpen / mouthFunnel / mouthStretch
+    // Primary: eyeWideLeft/Right (AU5), browUp (AU1+2), jawOpen / mouthFunnel
+    // Note: Fear strictly requires widened eyes. Without wide eyes, opening mouth is just eating/melet.
     const eyeWideL = b['eyeWideLeft'] || 0;
     const eyeWideR = b['eyeWideRight'] || 0;
     const browOuterUpL = b['browOuterUpLeft'] || 0;
     const browOuterUpR = b['browOuterUpRight'] || 0;
     const eyeWide = Math.max(eyeWideL, eyeWideR) * 0.7 + ((eyeWideL + eyeWideR) * 0.5) * 0.3;
-    const browUp = Math.max(browInnerUp, (browOuterUpL + browOuterUpR) * 0.5);
+    const browUp = Math.max(browSadness, (browOuterUpL + browOuterUpR) * 0.5);
     const mouthGasp = Math.max(
       b['jawOpen'] || 0,
       b['mouthFunnel'] || 0,
       ((b['mouthStretchLeft'] || 0) + (b['mouthStretchRight'] || 0)) * 0.5
     );
-    const rawTakut = (eyeWide * 0.50 + browUp * 0.28 + mouthGasp * 0.22) * 1.35;
+    const eyeWideFactor = Math.min(1.0, eyeWide / 0.14);
+    const rawTakut = (eyeWide * 0.55 + browUp * 0.30 + mouthGasp * 0.15) * 1.35 * eyeWideFactor;
 
     // 5. Sebal (Disgust / Sneer / Contempt)
     // Primary: noseSneerLeft/Right (AU9), mouthUpperUpLeft/Right (AU10), asymmetric sneer
