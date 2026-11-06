@@ -21,14 +21,8 @@ export const App: React.FC = () => {
     }
   };
 
-  const isScanner = mode === 'scanner';
-
   return (
-    <div
-      className={`w-full ${
-        isScanner ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-[100dvh]'
-      } flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black`}
-    >
+    <div className="w-full min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black">
       {/* Top Navigation Header */}
       <Header
         currentMode={mode}
@@ -37,7 +31,7 @@ export const App: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* Main View Area */}
+      {/* Main View Area: Fluid scroll on mobile, zero-scroll container on desktop */}
       <main className="flex-1 flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden">
         {mode === 'home' && <HomePage onSelectMode={handleSelectMode} />}
         {mode === 'scanner' && <ScannerView />}

@@ -43,7 +43,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full min-h-[320px] max-h-full bg-[#121316] rounded-3xl overflow-hidden shadow-xl border border-gray-200/20 flex items-center justify-center select-none"
+      className="relative w-full h-full min-h-[260px] sm:min-h-[320px] max-h-full bg-[#121316] rounded-3xl overflow-hidden shadow-xl border border-gray-200/20 flex items-center justify-center select-none"
     >
       {/* Video Stream Element */}
       <video

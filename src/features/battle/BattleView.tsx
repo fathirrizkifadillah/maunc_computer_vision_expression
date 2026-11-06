@@ -487,14 +487,14 @@ export const BattleView: React.FC = () => {
   const canStart = battleState.p1.isReady && battleState.p2.isReady && battleState.status === 'ready';
 
   return (
-    <div className="w-full max-w-[1540px] mx-auto px-4 lg:px-8 py-2 h-[calc(100dvh-57px-41px)] max-h-[calc(100dvh-57px-41px)] overflow-hidden flex flex-col justify-between min-h-0">
+    <div className="w-full max-w-[1540px] mx-auto px-3 sm:px-4 lg:px-8 py-2 min-h-0 h-auto lg:h-[calc(100dvh-57px-41px)] lg:max-h-[calc(100dvh-57px-41px)] lg:overflow-hidden flex flex-col justify-start lg:justify-between gap-2.5 sm:gap-3 pb-8 lg:pb-2">
       {/* Top Split Battle Arena: Dominant, Spacious, Large Viewports */}
-      <div className="relative w-full rounded-3xl p-2.5 md:p-3 bg-white/70 backdrop-blur-md border border-gray-200/90 shadow-xl flex-1 flex flex-col justify-center min-h-0 mb-2">
+      <div className="relative w-full rounded-3xl p-2 sm:p-2.5 md:p-3 bg-white/70 backdrop-blur-md border border-gray-200/90 shadow-xl h-[300px] xs:h-[360px] sm:h-[440px] lg:h-auto lg:flex-1 flex flex-col justify-center min-h-0 mb-1 lg:mb-2">
         {/* Quick Camera Mode Switcher Header Pill */}
-        <div className="absolute top-2.5 left-4 z-30">
+        <div className="absolute top-2.5 left-3 sm:left-4 z-30">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[11px] font-bold rounded-full border border-white/10 transition-colors shadow-sm cursor-pointer"
+            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold rounded-full border border-white/10 transition-colors shadow-sm cursor-pointer"
             title="Klik untuk mengubah mode kamera (1 kamera atau 2 kamera terpisah)"
           >
             {cameraSettings.mode === 'dual' ? (
@@ -517,10 +517,10 @@ export const BattleView: React.FC = () => {
           /* SINGLE CAMERA ARENA: ONE CONTINUOUS CONTAINER SPLIT BY CENTER YELLOW DIVIDER */
           <div className="relative w-full h-full min-h-0 bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-xl flex items-center justify-center select-none group">
             {/* Cyber Corner Brackets [ ] on outer 4 corners */}
-            <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-gray-700/60 rounded-tl-lg pointer-events-none z-20" />
-            <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-gray-700/60 rounded-tr-lg pointer-events-none z-20" />
-            <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-gray-700/60 rounded-bl-lg pointer-events-none z-20" />
-            <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-gray-700/60 rounded-br-lg pointer-events-none z-20" />
+            <div className="absolute top-3 sm:top-4 left-3 sm:left-4 w-5 h-5 sm:w-6 sm:h-6 border-t-2 border-l-2 border-gray-700/60 rounded-tl-lg pointer-events-none z-20" />
+            <div className="absolute top-3 sm:top-4 right-3 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 border-t-2 border-r-2 border-gray-700/60 rounded-tr-lg pointer-events-none z-20" />
+            <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 w-5 h-5 sm:w-6 sm:h-6 border-b-2 border-l-2 border-gray-700/60 rounded-bl-lg pointer-events-none z-20" />
+            <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 border-b-2 border-r-2 border-gray-700/60 rounded-br-lg pointer-events-none z-20" />
 
             {/* Continuous Video Feed across whole arena */}
             {isCameraActive && (
@@ -542,71 +542,71 @@ export const BattleView: React.FC = () => {
             )}
 
             {/* Vertical Golden Center Divider Line */}
-            <div className="absolute left-1/2 top-2 bottom-2 w-1.5 -translate-x-1/2 bg-maunc-yellow rounded-full z-20 pointer-events-none shadow-glow-yellow" />
+            <div className="absolute left-1/2 top-2 bottom-2 w-1 sm:w-1.5 -translate-x-1/2 bg-maunc-yellow rounded-full z-20 pointer-events-none shadow-glow-yellow" />
 
             {/* LEFT ZONE: Player 1 */}
             <div className="absolute left-0 top-0 bottom-0 w-1/2 z-20 pointer-events-none overflow-hidden">
               {!battleState.p1.isRegistered ? (
                 /* Unregistered State for Player 1 */
-                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-white bg-black/60 backdrop-blur-sm pointer-events-auto animate-fade-in">
-                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2 text-maunc-yellow">
-                    <UserPlus className="w-7 h-7" />
+                <div className="w-full h-full flex flex-col items-center justify-center p-3 sm:p-6 text-center text-white bg-black/60 backdrop-blur-sm pointer-events-auto animate-fade-in">
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-1.5 sm:mb-2 text-maunc-yellow">
+                    <UserPlus className="w-5 h-5 sm:w-7 sm:h-7" />
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white mb-1">
+                  <h3 className="text-base sm:text-xl md:text-2xl font-bold tracking-tight text-white mb-0.5 sm:mb-1">
                     Player 1
                   </h3>
-                  <p className="text-gray-400 text-xs mb-4">
-                    Daftarkan nama untuk memulai
+                  <p className="text-gray-400 text-[10px] sm:text-xs mb-2 sm:mb-4">
+                    Daftarkan nama
                   </p>
                   <button
                     onClick={() => setRegisteringPlayerId(1)}
-                    className="flex items-center space-x-2 px-5 py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-xs transition-all shadow-glow-yellow active:scale-95 cursor-pointer"
+                    className="flex items-center space-x-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-[11px] sm:text-xs transition-all shadow-glow-yellow active:scale-95 cursor-pointer"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Daftar / Ganti Nama</span>
+                    <Edit3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span>Daftar / Ganti</span>
                   </button>
                 </div>
               ) : (
                 /* Registered State for Player 1 */
                 <>
                   {/* Top-Left Name & Ready Status Pill */}
-                  <div className="absolute top-4 left-4 flex items-center space-x-2 pointer-events-auto">
-                    <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
-                      <span className="text-white text-xs md:text-sm font-bold tracking-wide">
+                  <div className="absolute top-2.5 sm:top-4 left-2 sm:left-4 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:space-x-2 pointer-events-auto max-w-[calc(100%-8px)]">
+                    <div className="flex items-center space-x-1.5 bg-black/70 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-white/10">
+                      <span className="text-white text-[11px] sm:text-xs md:text-sm font-bold tracking-wide truncate max-w-[70px] sm:max-w-[120px]">
                         {battleState.p1.name}
                       </span>
                       <button
                         onClick={() => setRegisteringPlayerId(1)}
-                        className="text-gray-400 hover:text-maunc-yellow transition-colors ml-1 cursor-pointer"
+                        className="text-gray-400 hover:text-maunc-yellow transition-colors ml-0.5 sm:ml-1 cursor-pointer"
                         title="Ubah Nama"
                       >
-                        <Edit3 className="w-3.5 h-3.5" />
+                        <Edit3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
 
                     {/* Status Pill */}
                     {zoneCounts.p1 > 1 ? (
-                      <div className="flex items-center space-x-1.5 bg-red-950/80 border border-red-500/50 text-red-200 text-xs px-3 py-1 rounded-full">
-                        <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-                        <span>Area Penuh (&gt;1 wajah)</span>
+                      <div className="flex items-center space-x-1 bg-red-950/80 border border-red-500/50 text-red-200 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                        <AlertTriangle className="w-3 h-3 text-red-400" />
+                        <span>Penuh</span>
                       </div>
                     ) : battleState.p1.isReady ? (
-                      <div className="flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs px-3 py-1 rounded-full">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <div className="flex items-center space-x-1 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                         <span>Siap</span>
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-1.5 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-xs px-3 py-1 rounded-full">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                        <span>Mencari Wajah...</span>
+                      <div className="flex items-center space-x-1 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                        <span>Mencari...</span>
                       </div>
                     )}
                   </div>
 
                   {/* Bottom-Left Detected Expression Pill */}
                   {p1Face && isCameraActive && (
-                    <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs text-white border border-white/10 flex items-center space-x-2 pointer-events-auto">
-                      <span className="text-gray-400">Ekspresi:</span>
+                    <div className="absolute bottom-2.5 sm:bottom-4 left-2 sm:left-4 bg-black/70 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs text-white border border-white/10 flex items-center space-x-1.5 pointer-events-auto">
+                      <span className="text-gray-400 hidden xs:inline">Ekspresi:</span>
                       <span className="font-bold text-maunc-yellow">
                         {p1Face.expressionLabel || 'Netral'}
                       </span>
@@ -618,19 +618,19 @@ export const BattleView: React.FC = () => {
 
                   {/* Round Win Overlay for Player 1 */}
                   {battleState.p1.result === 'won' && (
-                    <div className="absolute inset-0 z-30 bg-emerald-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-emerald-500">
-                      <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-2 text-maunc-yellow animate-bounce">
-                        <Trophy className="w-8 h-8" />
+                    <div className="absolute inset-0 z-30 bg-emerald-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-6 text-center animate-fade-in border-4 border-emerald-500">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-1.5 sm:mb-2 text-maunc-yellow animate-bounce">
+                        <Trophy className="w-6 h-6 sm:w-8 sm:h-8" />
                       </div>
-                      <h2 className="text-3xl md:text-4xl font-black text-emerald-300 tracking-wider mb-1">
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-300 tracking-wider mb-1">
                         MENANG!
                       </h2>
-                      <p className="text-sm font-semibold text-white">{battleState.p1.name}</p>
+                      <p className="text-xs sm:text-sm font-semibold text-white">{battleState.p1.name}</p>
                     </div>
                   )}
                   {battleState.p1.result === 'lost' && (
-                    <div className="absolute inset-0 z-30 bg-red-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-                      <h2 className="text-2xl md:text-3xl font-extrabold text-red-400 tracking-wider mb-1">
+                    <div className="absolute inset-0 z-30 bg-red-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-6 text-center animate-fade-in">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-red-400 tracking-wider mb-1">
                         KALAH
                       </h2>
                       <p className="text-xs text-gray-300">{battleState.p1.name}</p>
@@ -644,65 +644,65 @@ export const BattleView: React.FC = () => {
             <div className="absolute right-0 top-0 bottom-0 w-1/2 z-20 pointer-events-none overflow-hidden">
               {!battleState.p2.isRegistered ? (
                 /* Unregistered State for Player 2 */
-                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-white bg-black/60 backdrop-blur-sm pointer-events-auto animate-fade-in">
-                  <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-2 text-maunc-yellow">
-                    <UserPlus className="w-7 h-7" />
+                <div className="w-full h-full flex flex-col items-center justify-center p-3 sm:p-6 text-center text-white bg-black/60 backdrop-blur-sm pointer-events-auto animate-fade-in">
+                  <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-1.5 sm:mb-2 text-maunc-yellow">
+                    <UserPlus className="w-5 h-5 sm:w-7 sm:h-7" />
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold tracking-tight text-white mb-1">
+                  <h3 className="text-base sm:text-xl md:text-2xl font-bold tracking-tight text-white mb-0.5 sm:mb-1">
                     Player 2
                   </h3>
-                  <p className="text-gray-400 text-xs mb-4">
-                    Daftarkan nama untuk memulai
+                  <p className="text-gray-400 text-[10px] sm:text-xs mb-2 sm:mb-4">
+                    Daftarkan nama
                   </p>
                   <button
                     onClick={() => setRegisteringPlayerId(2)}
-                    className="flex items-center space-x-2 px-5 py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-xs transition-all shadow-glow-yellow active:scale-95 cursor-pointer"
+                    className="flex items-center space-x-1.5 px-3.5 sm:px-5 py-1.5 sm:py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-bold rounded-full text-[11px] sm:text-xs transition-all shadow-glow-yellow active:scale-95 cursor-pointer"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Daftar / Ganti Nama</span>
+                    <Edit3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <span>Daftar / Ganti</span>
                   </button>
                 </div>
               ) : (
                 /* Registered State for Player 2 */
                 <>
                   {/* Top-Right Name & Ready Status Pill */}
-                  <div className="absolute top-4 right-4 flex items-center space-x-2 pointer-events-auto">
+                  <div className="absolute top-2.5 sm:top-4 right-2 sm:right-4 flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:space-x-2 pointer-events-auto max-w-[calc(100%-8px)]">
                     {/* Status Pill */}
                     {zoneCounts.p2 > 1 ? (
-                      <div className="flex items-center space-x-1.5 bg-red-950/80 border border-red-500/50 text-red-200 text-xs px-3 py-1 rounded-full">
-                        <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-                        <span>Area Penuh (&gt;1 wajah)</span>
+                      <div className="flex items-center space-x-1 bg-red-950/80 border border-red-500/50 text-red-200 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                        <AlertTriangle className="w-3 h-3 text-red-400" />
+                        <span>Penuh</span>
                       </div>
                     ) : battleState.p2.isReady ? (
-                      <div className="flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs px-3 py-1 rounded-full">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <div className="flex items-center space-x-1 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                         <span>Siap</span>
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-1.5 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-xs px-3 py-1 rounded-full">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                        <span>Mencari Wajah...</span>
+                      <div className="flex items-center space-x-1 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                        <span>Mencari...</span>
                       </div>
                     )}
 
-                    <div className="flex items-center space-x-2 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
-                      <span className="text-white text-xs md:text-sm font-bold tracking-wide">
+                    <div className="flex items-center space-x-1.5 bg-black/70 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-white/10">
+                      <span className="text-white text-[11px] sm:text-xs md:text-sm font-bold tracking-wide truncate max-w-[70px] sm:max-w-[120px]">
                         {battleState.p2.name}
                       </span>
                       <button
                         onClick={() => setRegisteringPlayerId(2)}
-                        className="text-gray-400 hover:text-maunc-yellow transition-colors ml-1 cursor-pointer"
+                        className="text-gray-400 hover:text-maunc-yellow transition-colors ml-0.5 sm:ml-1 cursor-pointer"
                         title="Ubah Nama"
                       >
-                        <Edit3 className="w-3.5 h-3.5" />
+                        <Edit3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       </button>
                     </div>
                   </div>
 
                   {/* Bottom-Right Detected Expression Pill */}
                   {p2Face && isCameraActive && (
-                    <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs text-white border border-white/10 flex items-center space-x-2 pointer-events-auto">
-                      <span className="text-gray-400">Ekspresi:</span>
+                    <div className="absolute bottom-2.5 sm:bottom-4 right-2 sm:right-4 bg-black/70 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs text-white border border-white/10 flex items-center space-x-1.5 pointer-events-auto">
+                      <span className="text-gray-400 hidden xs:inline">Ekspresi:</span>
                       <span className="font-bold text-maunc-yellow">
                         {p2Face.expressionLabel || 'Netral'}
                       </span>
@@ -714,19 +714,19 @@ export const BattleView: React.FC = () => {
 
                   {/* Round Win Overlay for Player 2 */}
                   {battleState.p2.result === 'won' && (
-                    <div className="absolute inset-0 z-30 bg-emerald-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in border-4 border-emerald-500">
-                      <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-2 text-maunc-yellow animate-bounce">
-                        <Trophy className="w-8 h-8" />
+                    <div className="absolute inset-0 z-30 bg-emerald-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-6 text-center animate-fade-in border-4 border-emerald-500">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-1.5 sm:mb-2 text-maunc-yellow animate-bounce">
+                        <Trophy className="w-6 h-6 sm:w-8 sm:h-8" />
                       </div>
-                      <h2 className="text-3xl md:text-4xl font-black text-emerald-300 tracking-wider mb-1">
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-emerald-300 tracking-wider mb-1">
                         MENANG!
                       </h2>
-                      <p className="text-sm font-semibold text-white">{battleState.p2.name}</p>
+                      <p className="text-xs sm:text-sm font-semibold text-white">{battleState.p2.name}</p>
                     </div>
                   )}
                   {battleState.p2.result === 'lost' && (
-                    <div className="absolute inset-0 z-30 bg-red-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-                      <h2 className="text-2xl md:text-3xl font-extrabold text-red-400 tracking-wider mb-1">
+                    <div className="absolute inset-0 z-30 bg-red-950/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-6 text-center animate-fade-in">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-red-400 tracking-wider mb-1">
                         KALAH
                       </h2>
                       <p className="text-xs text-gray-300">{battleState.p2.name}</p>
@@ -797,22 +797,9 @@ export const BattleView: React.FC = () => {
       </div>
 
       {/* Bottom Dashboard Section: Player 1 Score, Target Expression + Controls, Player 2 Score */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center flex-shrink-0">
-        {/* Left Column: Player 1 Score Card (Col 1-4) */}
-        <div className="lg:col-span-4 flex flex-col space-y-1">
-          <PlayerScoreCard player={battleState.p1} />
-          {battleState.p1.isRegistered && (
-            <button
-              onClick={() => handleChangePlayer(1)}
-              className="text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
-            >
-              Ganti Pemain 1
-            </button>
-          )}
-        </div>
-
-        {/* Center Column: Target Expression Card + Start Button (Col 5-8) */}
-        <div className="lg:col-span-4 flex flex-col items-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 sm:gap-3 items-center flex-shrink-0">
+        {/* On Mobile: Target Card is shown first (order-1) so user sees the target and Start button right below the arena! */}
+        <div className="order-1 lg:order-2 col-span-1 sm:col-span-2 lg:col-span-4 flex flex-col items-center">
           <TargetExpressionCard
             status={battleState.status}
             targetExpression={battleState.targetExpression}
@@ -824,13 +811,26 @@ export const BattleView: React.FC = () => {
           />
         </div>
 
+        {/* Left Column: Player 1 Score Card (Col 1-4) */}
+        <div className="order-2 lg:order-1 col-span-1 sm:col-span-1 lg:col-span-4 flex flex-col space-y-1">
+          <PlayerScoreCard player={battleState.p1} />
+          {battleState.p1.isRegistered && (
+            <button
+              onClick={() => handleChangePlayer(1)}
+              className="text-[10px] sm:text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
+            >
+              Ganti Pemain 1
+            </button>
+          )}
+        </div>
+
         {/* Right Column: Player 2 Score Card (Col 9-12) */}
-        <div className="lg:col-span-4 flex flex-col space-y-1">
+        <div className="order-3 lg:order-3 col-span-1 sm:col-span-1 lg:col-span-4 flex flex-col space-y-1">
           <PlayerScoreCard player={battleState.p2} />
           {battleState.p2.isRegistered && (
             <button
               onClick={() => handleChangePlayer(2)}
-              className="text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
+              className="text-[10px] sm:text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
             >
               Ganti Pemain 2
             </button>
