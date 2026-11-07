@@ -22,8 +22,16 @@ export const App: React.FC = () => {
     }
   };
 
+  const isScannerMode = mode === 'scanner';
+
   return (
-    <div className="w-full min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black relative">
+    <div
+      className={`w-full min-h-[100dvh] flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black relative ${
+        isScannerMode
+          ? 'lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden'
+          : 'lg:min-h-[100dvh]'
+      }`}
+    >
       {/* Top Navigation Header */}
       <Header
         currentMode={mode}
@@ -32,8 +40,14 @@ export const App: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* Main View Area: Fluid scroll on mobile, zero-scroll container on desktop */}
-      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden pb-16 md:pb-0">
+      {/* Main View Area: Mode 1 (Scanner) is strictly zero-scroll on desktop, Mode 2 (Battle) is scrollable */}
+      <main
+        className={`flex-1 flex flex-col min-h-0 pb-16 md:pb-0 ${
+          isScannerMode
+            ? 'overflow-y-auto lg:overflow-hidden'
+            : 'overflow-y-auto'
+        }`}
+      >
         {mode === 'home' && <HomePage onSelectMode={handleSelectMode} />}
         {mode === 'scanner' && <ScannerView />}
         {mode === 'battle' && <BattleView />}
