@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Header, AppMode } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
+import { MobileBottomNav } from '../components/layout/MobileBottomNav';
 import { InfoModal } from '../components/common/InfoModal';
 import { CameraSettingsModal } from '../components/common/CameraSettingsModal';
 import { HomePage } from '../pages/HomePage';
@@ -22,7 +23,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black">
+    <div className="w-full min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden flex flex-col justify-between bg-maunc-bg text-maunc-black selection:bg-maunc-yellow selection:text-maunc-black relative">
       {/* Top Navigation Header */}
       <Header
         currentMode={mode}
@@ -32,11 +33,16 @@ export const App: React.FC = () => {
       />
 
       {/* Main View Area: Fluid scroll on mobile, zero-scroll container on desktop */}
-      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden">
+      <main className="flex-1 flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden pb-16 md:pb-0">
         {mode === 'home' && <HomePage onSelectMode={handleSelectMode} />}
         {mode === 'scanner' && <ScannerView />}
         {mode === 'battle' && <BattleView />}
       </main>
+
+      {/* Mobile-Only Floating Bottom Navigation Bar (Thumb-reach ergonomics) */}
+      {mode !== 'home' && (
+        <MobileBottomNav currentMode={mode} onSelectMode={handleSelectMode} />
+      )}
 
       {/* Official Bottom Bar */}
       <Footer />

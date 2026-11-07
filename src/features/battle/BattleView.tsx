@@ -12,6 +12,7 @@ import {
   Edit3,
   CheckCircle2,
   Trophy,
+  Zap,
 } from 'lucide-react';
 import { BattleState } from './types';
 import { BATTLE_CONFIG, pickRandomExpression, countFacesInZones, evaluateExpressionMatch } from './logic/battleEngine';
@@ -440,6 +441,15 @@ export const BattleView: React.FC = () => {
     setRegisteringPlayerId(null);
   };
 
+  const handleQuickRegister = () => {
+    setBattleState((prev) => ({
+      ...prev,
+      p1: { ...prev.p1, isRegistered: true, name: prev.p1.name || 'Player 1', result: null },
+      p2: { ...prev.p2, isRegistered: true, name: prev.p2.name || 'Player 2', result: null },
+    }));
+    initCameras();
+  };
+
   const handleResetAll = () => {
     if (countdownTimerRef.current) window.clearInterval(countdownTimerRef.current);
     if (roundTimerRef.current) window.clearInterval(roundTimerRef.current);
@@ -759,10 +769,36 @@ export const BattleView: React.FC = () => {
                 }}
               />
             )}
+
+            {/* Quick Instant Setup Pill (Ideal for mobile & fast arcade play) */}
+            {(!battleState.p1.isRegistered || !battleState.p2.isRegistered) && (
+              <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+                <button
+                  onClick={handleQuickRegister}
+                  className="flex items-center space-x-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-extrabold rounded-full text-[11px] sm:text-xs shadow-glow-yellow active:scale-95 transition-all cursor-pointer whitespace-nowrap border border-black/10 min-h-[38px]"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-current text-maunc-black" />
+                  <span>⚡ Mulai Cepat (P1 & P2)</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           /* DUAL CAMERA ARENA: 2 SEPARATE PHYSICAL VIEWPORTS SIDE-BY-SIDE */
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative items-stretch h-full min-h-0">
+            {/* Quick Instant Setup Pill for Dual Camera */}
+            {(!battleState.p1.isRegistered || !battleState.p2.isRegistered) && (
+              <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+                <button
+                  onClick={handleQuickRegister}
+                  className="flex items-center space-x-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-extrabold rounded-full text-[11px] sm:text-xs shadow-glow-yellow active:scale-95 transition-all cursor-pointer whitespace-nowrap border border-black/10 min-h-[38px]"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-current text-maunc-black" />
+                  <span>⚡ Mulai Cepat (P1 & P2)</span>
+                </button>
+              </div>
+            )}
+
             {/* Left: Player 1 Viewport */}
             <PlayerViewport
               player={battleState.p1}
@@ -797,9 +833,9 @@ export const BattleView: React.FC = () => {
       </div>
 
       {/* Bottom Dashboard Section: Player 1 Score, Target Expression + Controls, Player 2 Score */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 sm:gap-3 items-center flex-shrink-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-3 items-center flex-shrink-0">
         {/* On Mobile: Target Card is shown first (order-1) so user sees the target and Start button right below the arena! */}
-        <div className="order-1 lg:order-2 col-span-1 sm:col-span-2 lg:col-span-4 flex flex-col items-center">
+        <div className="order-1 lg:order-2 col-span-1 lg:col-span-4 flex flex-col items-center">
           <TargetExpressionCard
             status={battleState.status}
             targetExpression={battleState.targetExpression}
@@ -811,39 +847,44 @@ export const BattleView: React.FC = () => {
           />
         </div>
 
-        {/* Left Column: Player 1 Score Card (Col 1-4) */}
-        <div className="order-2 lg:order-1 col-span-1 sm:col-span-1 lg:col-span-4 flex flex-col space-y-1">
-          <PlayerScoreCard player={battleState.p1} />
-          {battleState.p1.isRegistered && (
-            <button
-              onClick={() => handleChangePlayer(1)}
-              className="text-[10px] sm:text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
-            >
-              Ganti Pemain 1
-            </button>
-          )}
-        </div>
+        {/* On Mobile: Player 1 and Player 2 scores sit side-by-side in a 2-column grid */}
+        <div className="order-2 lg:contents col-span-1">
+          <div className="grid grid-cols-2 lg:contents gap-2 sm:gap-3">
+            {/* Player 1 Score Card (Col 1-4 on desktop) */}
+            <div className="lg:order-1 lg:col-span-4 flex flex-col space-y-1">
+              <PlayerScoreCard player={battleState.p1} />
+              {battleState.p1.isRegistered && (
+                <button
+                  onClick={() => handleChangePlayer(1)}
+                  className="text-[10px] sm:text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-1.5 py-0.5 transition-colors cursor-pointer"
+                >
+                  Ganti Pemain 1
+                </button>
+              )}
+            </div>
 
-        {/* Right Column: Player 2 Score Card (Col 9-12) */}
-        <div className="order-3 lg:order-3 col-span-1 sm:col-span-1 lg:col-span-4 flex flex-col space-y-1">
-          <PlayerScoreCard player={battleState.p2} />
-          {battleState.p2.isRegistered && (
-            <button
-              onClick={() => handleChangePlayer(2)}
-              className="text-[10px] sm:text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-2 py-0.5 transition-colors cursor-pointer"
-            >
-              Ganti Pemain 2
-            </button>
-          )}
+            {/* Player 2 Score Card (Col 9-12 on desktop) */}
+            <div className="lg:order-3 lg:col-span-4 flex flex-col space-y-1">
+              <PlayerScoreCard player={battleState.p2} />
+              {battleState.p2.isRegistered && (
+                <button
+                  onClick={() => handleChangePlayer(2)}
+                  className="text-[10px] sm:text-[11px] font-semibold text-gray-500 hover:text-maunc-black self-start px-1.5 py-0.5 transition-colors cursor-pointer"
+                >
+                  Ganti Pemain 2
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Bottom Controls Bar */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pt-1.5 border-t border-gray-200/80 flex-shrink-0">
+      <div className="flex items-center justify-between flex-wrap gap-2 pt-1.5 border-t border-gray-200/80 flex-shrink-0">
         {/* Left: Reset Button */}
         <button
           onClick={handleResetAll}
-          className="flex items-center space-x-2 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-full text-xs transition-all shadow-sm active:scale-95 cursor-pointer min-h-[38px]"
           title="Reset Seluruh Sesi Pertandingan"
         >
           <RotateCcw className="w-3.5 h-3.5 text-gray-600" />
@@ -853,15 +894,15 @@ export const BattleView: React.FC = () => {
         {/* Center: Match Format Badge with Click to Change */}
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center space-x-2 text-xs text-gray-500 hover:text-maunc-black font-medium transition-colors cursor-pointer"
+          className="flex items-center space-x-1.5 text-xs text-gray-600 hover:text-maunc-black font-medium transition-colors cursor-pointer min-h-[38px] px-2"
         >
-          <Users className="w-4 h-4 text-gray-400" />
-          <span>
+          <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <span className="truncate max-w-[170px] sm:max-w-none">
             {cameraSettings.mode === 'dual'
-              ? 'Pertandingan 2 Pemain • 2 Kamera Terpisah'
-              : 'Pertandingan 2 Pemain • 1 Webcam Bersama'}
+              ? '2 Pemain • 2 Kamera'
+              : '2 Pemain • 1 Webcam'}
           </span>
-          <span className="text-[10px] text-amber-600 font-bold underline ml-1">Ubah Kamera</span>
+          <span className="text-[10px] text-amber-600 font-bold underline ml-0.5">Ubah</span>
         </button>
 
         {/* Right: Clean MAUNC Emblem Identity */}

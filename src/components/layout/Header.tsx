@@ -44,12 +44,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center & Right: Mode Switcher Pills + Camera Settings + Info Button */}
-        <div className="flex items-center space-x-1 sm:space-x-2">
+        {/* Center: Mode Switcher Pills (Desktop & Tablet) */}
+        <div className="hidden md:flex items-center space-x-2">
           {/* Scanner Pill */}
           <button
             onClick={() => onSelectMode('scanner')}
-            className={`flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[38px] sm:min-h-[42px] ${
+            className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[40px] ${
               currentMode === 'scanner'
                 ? 'bg-maunc-yellow text-maunc-black shadow-md font-bold'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -57,15 +57,13 @@ export const Header: React.FC<HeaderProps> = ({
             aria-pressed={currentMode === 'scanner'}
           >
             <ScanFace className="w-4 h-4 text-maunc-black flex-shrink-0" />
-            <span>
-              <span className="hidden sm:inline">Expression </span>Scanner
-            </span>
+            <span>Expression Scanner</span>
           </button>
 
           {/* Battle Pill */}
           <button
             onClick={() => onSelectMode('battle')}
-            className={`flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[38px] sm:min-h-[42px] ${
+            className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[40px] ${
               currentMode === 'battle'
                 ? 'bg-maunc-yellow text-maunc-black shadow-md font-bold'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -73,15 +71,16 @@ export const Header: React.FC<HeaderProps> = ({
             aria-pressed={currentMode === 'battle'}
           >
             <Gamepad2 className="w-4 h-4 text-maunc-black flex-shrink-0" />
-            <span>
-              <span className="hidden sm:inline">Expression </span>Battle
-            </span>
+            <span>Expression Battle</span>
           </button>
+        </div>
 
+        {/* Right: Camera Settings & Info Buttons */}
+        <div className="flex items-center space-x-1.5 sm:space-x-2">
           {/* Camera Settings Button */}
           <button
             onClick={onOpenSettings}
-            className="p-2 sm:p-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-maunc-black transition-colors cursor-pointer min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center flex-shrink-0"
+            className="p-2 sm:p-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-maunc-black transition-colors cursor-pointer min-w-[38px] min-h-[38px] sm:min-w-[42px] sm:min-h-[42px] flex items-center justify-center flex-shrink-0 active:scale-95"
             title="Pengaturan Kamera"
             aria-label="Pengaturan Kamera"
           >
@@ -91,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Info Modal Button */}
           <button
             onClick={onOpenInfo}
-            className="p-2 sm:p-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-maunc-black transition-colors cursor-pointer min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] flex items-center justify-center flex-shrink-0"
+            className="p-2 sm:p-2.5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-maunc-black transition-colors cursor-pointer min-w-[38px] min-h-[38px] sm:min-w-[42px] sm:min-h-[42px] flex items-center justify-center flex-shrink-0 active:scale-95"
             title="Informasi Sistem"
             aria-label="Informasi Sistem"
           >

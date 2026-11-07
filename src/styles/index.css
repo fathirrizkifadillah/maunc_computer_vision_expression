@@ -7,12 +7,14 @@
 @layer base {
   * {
     border-color: var(--maunc-border);
+    -webkit-tap-highlight-color: transparent;
   }
-  body {
+  html, body {
     background-color: var(--maunc-bg);
     color: var(--maunc-black);
     font-family: 'Outfit', sans-serif;
     overflow-x: hidden;
+    touch-action: manipulation;
   }
 }
 

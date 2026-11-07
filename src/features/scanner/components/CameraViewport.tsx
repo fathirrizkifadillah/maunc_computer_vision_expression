@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Camera, CameraOff, RefreshCw, Maximize2, AlertCircle } from 'lucide-react';
+import { Camera, CameraOff, RefreshCw, Maximize2, AlertCircle, SwitchCamera } from 'lucide-react';
 import { DetectedFace } from '../../vision/types';
 import { CameraStatus } from '../../vision/camera/CameraManager';
 
@@ -12,6 +12,8 @@ interface CameraViewportProps {
   videoRef: (node: HTMLVideoElement | null) => void;
   onStartCamera: () => void;
   onStopCamera: () => void;
+  onCycleCamera?: () => void;
+  canCycleCamera?: boolean;
   error: string | null;
 }
 
@@ -24,6 +26,8 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
   videoRef,
   onStartCamera,
   onStopCamera,
+  onCycleCamera,
+  canCycleCamera = false,
   error,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -39,6 +43,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
   };
 
   const isLive = cameraStatus === 'active';
+  const activeFace = faces.find((f) => f.faceId === selectedFaceId) || faces[0] || null;
 
   return (
     <div
@@ -137,10 +142,10 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
       {/* Floating Bottom Left Camera Controls */}
       {isLive && (
-        <div className="absolute bottom-4 left-4 z-20 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-2.5 py-1.5 rounded-2xl border border-white/10 shadow-lg">
+        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-20 flex items-center space-x-1 sm:space-x-1.5 bg-black/60 backdrop-blur-md px-2 sm:px-2.5 py-1.5 rounded-2xl border border-white/10 shadow-lg">
           <button
             onClick={onStopCamera}
-            className="p-1.5 text-white hover:text-red-400 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 text-white hover:text-red-400 hover:bg-white/10 rounded-xl transition-colors cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center active:scale-90"
             title="Hentikan Kamera"
             aria-label="Hentikan Kamera"
           >
@@ -149,21 +154,51 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
 
           <button
             onClick={() => setIsMirrored(!isMirrored)}
-            className="p-1.5 text-white hover:text-maunc-yellow hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 text-white hover:text-maunc-yellow hover:bg-white/10 rounded-xl transition-colors cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center active:scale-90"
             title="Mirror Kamera"
             aria-label="Mirror Kamera"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
+
+          {canCycleCamera && onCycleCamera && (
+            <button
+              onClick={onCycleCamera}
+              className="p-2 sm:p-1.5 text-white hover:text-maunc-yellow hover:bg-white/10 rounded-xl transition-colors cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center active:scale-90"
+              title="Ganti Kamera Depan / Belakang"
+              aria-label="Ganti Kamera Depan / Belakang"
+            >
+              <SwitchCamera className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Mobile-Friendly Live In-Camera Mascot Reaction Badge */}
+      {isLive && activeFace && (
+        <div className="absolute bottom-3 right-14 sm:bottom-4 sm:right-16 z-20 flex items-center space-x-2 bg-black/75 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-maunc-yellow/30 shadow-lg animate-fade-in pointer-events-auto">
+          <img
+            src={`/assets/expressions/${activeFace.expression || 'netral'}.png`}
+            alt={activeFace.expressionLabel || 'Netral'}
+            className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+          />
+          <div className="flex flex-col">
+            <span className="text-[10px] sm:text-xs font-black text-maunc-yellow uppercase tracking-wide leading-none">
+              {activeFace.expressionLabel || 'Netral'}
+            </span>
+            <span className="text-[9px] text-gray-300 leading-none mt-0.5">
+              {Math.round((activeFace.confidence || 0.85) * 100)}%
+            </span>
+          </div>
         </div>
       )}
 
       {/* Floating Bottom Right Fullscreen Button */}
       {isLive && (
-        <div className="absolute bottom-4 right-4 z-20">
+        <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
           <button
             onClick={toggleFullscreen}
-            className="p-2 bg-black/60 backdrop-blur-md text-white hover:text-maunc-yellow hover:bg-black/80 rounded-xl border border-white/10 shadow-lg transition-colors cursor-pointer"
+            className="p-2 bg-black/60 backdrop-blur-md text-white hover:text-maunc-yellow hover:bg-black/80 rounded-xl border border-white/10 shadow-lg transition-colors cursor-pointer min-w-[38px] min-h-[38px] flex items-center justify-center active:scale-90"
             title="Layar Penuh"
             aria-label="Layar Penuh"
           >

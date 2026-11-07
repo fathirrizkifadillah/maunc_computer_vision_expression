@@ -374,6 +374,28 @@ class CameraManagerClass {
         (!!this.streamP1 && this.streamP1.active && !!this.streamP2 && this.streamP2.active))
     );
   }
+
+  /**
+   * Cycle to the next available camera device (ideal for mobile front/back camera flipping)
+   */
+  public async cycleCamera(): Promise<MediaStream | null> {
+    if (this.availableDevices.length <= 1) {
+      await this.enumerateDevices();
+    }
+    if (this.availableDevices.length <= 1) {
+      return this.stream;
+    }
+
+    const currentIndex = this.availableDevices.findIndex(
+      (d) => d.deviceId === this.settings.singleDeviceId
+    );
+    const nextIndex = (currentIndex + 1) % this.availableDevices.length;
+    const nextDevice = this.availableDevices[nextIndex];
+
+    this.saveSettings({ singleDeviceId: nextDevice.deviceId });
+    this.stopCamera(true);
+    return this.startCamera(nextDevice.deviceId);
+  }
 }
 
 export const CameraManager = CameraManagerClass.getInstance();

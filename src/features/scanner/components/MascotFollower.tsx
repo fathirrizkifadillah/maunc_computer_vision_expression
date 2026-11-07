@@ -11,18 +11,22 @@ export const MascotFollower: React.FC<MascotFollowerProps> = ({ expression, sele
   const currentConfig = getExpressionConfig(expression);
 
   return (
-    <div className="w-full h-64 sm:h-72 md:h-80 lg:h-auto lg:flex-1 min-h-0 flex flex-col items-center justify-end relative select-none overflow-hidden">
-      {/* Minimal Floating Expression Status Badge (Only shown when active, zero clutter) */}
-      {selectedFaceId && (
-        <div className="mb-2 z-20 flex items-center space-x-2 bg-maunc-black/90 backdrop-blur-md text-white border border-maunc-yellow/30 px-3 sm:px-3.5 py-1 rounded-full shadow-lg animate-fade-in">
-          <span className="w-2 h-2 rounded-full bg-maunc-yellow animate-ping" />
-          <span className="text-[11px] sm:text-xs font-bold tracking-wide">{selectedFaceId}</span>
-          <span className="text-gray-400 text-xs">•</span>
-          <span className="text-[11px] sm:text-xs font-extrabold text-maunc-yellow uppercase tracking-wider">
-            {currentConfig.label}
-          </span>
-        </div>
-      )}
+    <div className="w-full h-56 xs:h-64 sm:h-72 md:h-80 lg:h-auto lg:flex-1 min-h-0 flex flex-col items-center justify-end relative select-none overflow-hidden">
+      {/* Floating Expression Status Badge with Official Avatar */}
+      <div className="mb-1.5 sm:mb-2 z-20 flex items-center space-x-2 bg-[#181A20]/90 backdrop-blur-md text-white border border-maunc-yellow/30 px-3 sm:px-3.5 py-1 rounded-full shadow-lg animate-fade-in">
+        <img
+          src={currentConfig.assetPath}
+          alt={currentConfig.label}
+          className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+        />
+        <span className="text-[11px] sm:text-xs font-bold text-gray-300">
+          {selectedFaceId || 'Mascot AI'}
+        </span>
+        <span className="text-gray-500 text-xs">•</span>
+        <span className="text-[11px] sm:text-xs font-black text-maunc-yellow uppercase tracking-wider">
+          {currentConfig.label}
+        </span>
+      </div>
 
       {/* Hero-Sized Half-Body Mascot (Large, Prominent, Crisp, Zero Clutter) */}
       <div className="relative w-full flex-1 min-h-0 flex items-end justify-center">
