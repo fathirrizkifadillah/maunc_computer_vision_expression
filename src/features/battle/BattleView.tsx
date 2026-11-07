@@ -498,8 +498,8 @@ export const BattleView: React.FC = () => {
 
   return (
     <div className="w-full max-w-[1540px] mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-2.5 flex flex-col gap-2.5 sm:gap-3 min-h-0">
-      {/* Top Split Battle Arena: Dominant, Spacious, Perfectly Calibrated Viewports */}
-      <div className="relative w-full rounded-3xl overflow-hidden border border-gray-800 shadow-2xl h-[260px] sm:h-[300px] md:h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[450px] flex flex-col flex-shrink-0 bg-[#121316]">
+      {/* Top Split Battle Arena: Dominant, Spacious, Large Viewports */}
+      <div className="relative w-full rounded-3xl overflow-hidden border border-gray-800 shadow-2xl h-[340px] sm:h-[420px] md:h-[480px] lg:h-[520px] xl:h-[560px] 2xl:h-[620px] flex flex-col flex-shrink-0 bg-[#121316]">
         {/* Quick Camera Mode Switcher Header Pill */}
         <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 pointer-events-auto">
           <button
@@ -807,7 +807,7 @@ export const BattleView: React.FC = () => {
                   className="flex items-center space-x-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-extrabold rounded-full text-[11px] sm:text-xs shadow-glow-yellow active:scale-95 transition-all cursor-pointer whitespace-nowrap border border-black/10 min-h-[38px]"
                 >
                   <Zap className="w-3.5 h-3.5 fill-current text-maunc-black" />
-                  <span>⚡ Mulai Cepat (P1 & P2)</span>
+                  <span>Mulai Cepat (P1 & P2)</span>
                 </button>
               </div>
             )}
@@ -823,7 +823,7 @@ export const BattleView: React.FC = () => {
                   className="flex items-center space-x-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 bg-maunc-yellow hover:bg-maunc-yellow-dark text-maunc-black font-extrabold rounded-full text-[11px] sm:text-xs shadow-glow-yellow active:scale-95 transition-all cursor-pointer whitespace-nowrap border border-black/10 min-h-[38px]"
                 >
                   <Zap className="w-3.5 h-3.5 fill-current text-maunc-black" />
-                  <span>⚡ Mulai Cepat (P1 & P2)</span>
+                  <span>Mulai Cepat (P1 & P2)</span>
                 </button>
               </div>
             )}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Bot, Users } from 'lucide-react';
 import { useVisionPipeline } from '../vision/hooks/useVisionPipeline';
 import { CameraManager } from '../vision/camera/CameraManager';
 import { CameraViewport } from './components/CameraViewport';
@@ -63,7 +64,8 @@ export const ScannerView: React.FC = () => {
                   : 'text-gray-600 hover:text-maunc-black hover:bg-gray-50'
               }`}
             >
-              <span>🐯 Maskot Harimau</span>
+              <Bot className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Maskot Harimau</span>
               {selectedFace && (
                 <span className="bg-maunc-black text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold uppercase">
                   {selectedFace.expressionLabel || 'Netral'}
@@ -78,7 +80,8 @@ export const ScannerView: React.FC = () => {
                   : 'text-gray-600 hover:text-maunc-black hover:bg-gray-50'
               }`}
             >
-              <span>👥 Wajah Terdeteksi</span>
+              <Users className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Wajah Terdeteksi</span>
               <span className="bg-amber-100 text-amber-900 text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold">
                 {faces.length}/3
               </span>
