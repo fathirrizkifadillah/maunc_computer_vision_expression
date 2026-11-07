@@ -168,4 +168,26 @@ describe('BlendshapeClassifierService', () => {
     const result = BlendshapeClassifierService.classify(blendshapes, 11);
     expect(result.expression).not.toBe('sedih');
   });
+
+  it('maintains active emotion latch under minor fluctuations (hysteresis)', () => {
+    // 1. Initial strong Senang expression (frame 1)
+    const strongSmile = {
+      mouthSmileLeft: 0.75,
+      mouthSmileRight: 0.78,
+      cheekSquintLeft: 0.55,
+      cheekSquintRight: 0.58,
+    };
+    const frame1 = BlendshapeClassifierService.classify(strongSmile, 99);
+    expect(frame1.expression).toBe('senang');
+
+    // 2. Minor drop to lower smile (frame 2): score > 0.16 (exit threshold), should STAY Senang!
+    const mildSmile = {
+      mouthSmileLeft: 0.22,
+      mouthSmileRight: 0.24,
+      cheekSquintLeft: 0.10,
+      cheekSquintRight: 0.10,
+    };
+    const frame2 = BlendshapeClassifierService.classify(mildSmile, 99);
+    expect(frame2.expression).toBe('senang');
+  });
 });
