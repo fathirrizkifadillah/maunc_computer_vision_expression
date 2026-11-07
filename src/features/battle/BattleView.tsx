@@ -497,9 +497,9 @@ export const BattleView: React.FC = () => {
   const canStart = battleState.p1.isReady && battleState.p2.isReady && battleState.status === 'ready';
 
   return (
-    <div className="w-full max-w-[1540px] mx-auto px-3 sm:px-4 lg:px-8 py-3 flex flex-col gap-3.5 sm:gap-4 min-h-0">
-      {/* Top Split Battle Arena: Dominant, Spacious, Large Viewports */}
-      <div className="relative w-full rounded-3xl overflow-hidden border border-gray-800 shadow-2xl h-[340px] sm:h-[420px] md:h-[480px] lg:h-[500px] xl:h-[540px] flex flex-col flex-shrink-0 bg-[#121316]">
+    <div className="w-full max-w-[1540px] mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-2.5 flex flex-col gap-2.5 sm:gap-3 min-h-0">
+      {/* Top Split Battle Arena: Dominant, Spacious, Perfectly Calibrated Viewports */}
+      <div className="relative w-full rounded-3xl overflow-hidden border border-gray-800 shadow-2xl h-[260px] sm:h-[300px] md:h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[450px] flex flex-col flex-shrink-0 bg-[#121316]">
         {/* Quick Camera Mode Switcher Header Pill */}
         <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 pointer-events-auto">
           <button
@@ -521,6 +521,35 @@ export const BattleView: React.FC = () => {
             <Sliders className="w-3 h-3 text-gray-400 ml-1" />
           </button>
         </div>
+
+        {/* Floating In-Arena Center Target HUD (Visible between players during battle) */}
+        {(battleState.status === 'battling' || battleState.status === 'countdown') && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex items-center space-x-2.5 bg-black/85 backdrop-blur-md px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl border-2 border-maunc-yellow shadow-glow-yellow animate-fade-in">
+            {battleState.targetExpression && (
+              <img
+                src={`/assets/expressions/${battleState.targetExpression}.png`}
+                alt={battleState.targetExpression}
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain filter drop-shadow-md animate-scale-up"
+              />
+            )}
+            <div className="flex flex-col">
+              <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider leading-none">
+                Target
+              </span>
+              <span className="text-sm sm:text-base font-black text-maunc-yellow uppercase tracking-wider leading-tight">
+                {battleState.targetExpression || 'Acak'}
+              </span>
+            </div>
+            {battleState.status === 'battling' && (
+              <div className="ml-2 pl-2 border-l border-white/20 flex flex-col items-center">
+                <span className="text-[9px] text-amber-400 font-bold uppercase leading-none">Waktu</span>
+                <span className="text-xs sm:text-sm font-black font-mono text-white leading-tight">
+                  {battleState.timeRemainingSec}s
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Arena Body: Mode 1 Kamera (Unified Split Screen) vs Mode 2 Kamera (2 Separate Boxes) */}
         {cameraSettings.mode === 'single' ? (
