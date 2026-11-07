@@ -497,14 +497,14 @@ export const BattleView: React.FC = () => {
   const canStart = battleState.p1.isReady && battleState.p2.isReady && battleState.status === 'ready';
 
   return (
-    <div className="w-full max-w-[1540px] mx-auto px-3 sm:px-4 lg:px-8 py-2 min-h-0 h-auto lg:h-[calc(100dvh-57px-41px)] lg:max-h-[calc(100dvh-57px-41px)] lg:overflow-hidden flex flex-col justify-start lg:justify-between gap-2.5 sm:gap-3 pb-8 lg:pb-2">
+    <div className="w-full max-w-[1540px] mx-auto px-2.5 sm:px-4 lg:px-8 py-1.5 sm:py-2 min-h-0 flex-1 h-auto lg:h-[calc(100dvh-57px-41px)] flex flex-col justify-between gap-2 sm:gap-2.5">
       {/* Top Split Battle Arena: Dominant, Spacious, Large Viewports */}
-      <div className="relative w-full rounded-3xl p-2 sm:p-2.5 md:p-3 bg-white/70 backdrop-blur-md border border-gray-200/90 shadow-xl h-[300px] xs:h-[360px] sm:h-[440px] lg:h-auto lg:flex-1 flex flex-col justify-center min-h-0 mb-1 lg:mb-2">
+      <div className="relative w-full flex-1 h-[380px] sm:h-[460px] md:h-[500px] lg:h-full min-h-[340px] sm:min-h-[440px] lg:min-h-[480px] xl:min-h-[540px] flex flex-col min-h-0">
         {/* Quick Camera Mode Switcher Header Pill */}
-        <div className="absolute top-2.5 left-3 sm:left-4 z-30">
+        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-30 pointer-events-auto">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold rounded-full border border-white/10 transition-colors shadow-sm cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-black/70 hover:bg-black/90 backdrop-blur-md text-white text-[11px] sm:text-xs font-bold rounded-full border border-white/20 transition-all shadow-lg cursor-pointer active:scale-95"
             title="Klik untuk mengubah mode kamera (1 kamera atau 2 kamera terpisah)"
           >
             {cameraSettings.mode === 'dual' ? (
@@ -525,7 +525,7 @@ export const BattleView: React.FC = () => {
         {/* Arena Body: Mode 1 Kamera (Unified Split Screen) vs Mode 2 Kamera (2 Separate Boxes) */}
         {cameraSettings.mode === 'single' ? (
           /* SINGLE CAMERA ARENA: ONE CONTINUOUS CONTAINER SPLIT BY CENTER YELLOW DIVIDER */
-          <div className="relative w-full h-full min-h-0 bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-xl flex items-center justify-center select-none group">
+          <div className="relative w-full flex-1 h-full min-h-0 bg-[#121316] rounded-3xl overflow-hidden border border-gray-800 shadow-2xl flex items-center justify-center select-none group">
             {/* Cyber Corner Brackets [ ] on outer 4 corners */}
             <div className="absolute top-3 sm:top-4 left-3 sm:left-4 w-5 h-5 sm:w-6 sm:h-6 border-t-2 border-l-2 border-gray-700/60 rounded-tl-lg pointer-events-none z-20" />
             <div className="absolute top-3 sm:top-4 right-3 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 border-t-2 border-r-2 border-gray-700/60 rounded-tr-lg pointer-events-none z-20" />
@@ -785,7 +785,7 @@ export const BattleView: React.FC = () => {
           </div>
         ) : (
           /* DUAL CAMERA ARENA: 2 SEPARATE PHYSICAL VIEWPORTS SIDE-BY-SIDE */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative items-stretch h-full min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 relative items-stretch flex-1 h-full min-h-0">
             {/* Quick Instant Setup Pill for Dual Camera */}
             {(!battleState.p1.isRegistered || !battleState.p2.isRegistered) && (
               <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">

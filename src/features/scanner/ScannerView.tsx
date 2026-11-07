@@ -37,7 +37,7 @@ export const ScannerView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-stretch lg:h-full lg:max-h-full min-h-0">
         {/* Left Column: Camera Viewport (Col 1-8, ~67%) */}
         <div className="lg:col-span-8 flex flex-col min-h-0">
-          <div className="h-[260px] xs:h-[300px] sm:h-[380px] lg:h-full max-h-full flex flex-col justify-center min-h-0">
+          <div className="h-[320px] sm:h-[440px] lg:h-full max-h-full flex flex-col justify-center min-h-0">
             <CameraViewport
               faces={faces}
               selectedFaceId={selectedFaceId}
