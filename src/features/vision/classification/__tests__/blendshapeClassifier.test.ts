@@ -169,6 +169,23 @@ describe('BlendshapeClassifierService', () => {
     expect(result.expression).not.toBe('sedih');
   });
 
+  it('does NOT misclassify resting face with arched eyebrows / looking up as sedih', () => {
+    // Common resting face or reading screen gaze: elevated browInnerUp without mouth sadness
+    const blendshapes = {
+      browInnerUp: 0.30,
+      browDownLeft: 0.05,
+      browDownRight: 0.05,
+      mouthFrownLeft: 0.03,
+      mouthFrownRight: 0.03,
+      mouthSmileLeft: 0.02,
+      mouthSmileRight: 0.02,
+      jawOpen: 0.02,
+    };
+    const result = BlendshapeClassifierService.classify(blendshapes, 12);
+    expect(result.expression).toBe('netral');
+    expect(result.label).toBe('Netral');
+  });
+
   it('maintains active emotion latch under minor fluctuations (hysteresis)', () => {
     // 1. Initial strong Senang expression (frame 1)
     const strongSmile = {

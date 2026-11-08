@@ -15,7 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { BattleState } from './types';
-import { BATTLE_CONFIG, pickRandomExpression, countFacesInZones, evaluateExpressionMatch } from './logic/battleEngine';
+import { BATTLE_CONFIG, pickRandomExpression, evaluateExpressionMatch, getFaceZone } from './logic/battleEngine';
 import { CameraManager, CameraSettings } from '../vision/camera/CameraManager';
 import { FaceDetectorService } from '../vision/detection/FaceDetector';
 import { BlendshapeClassifierService } from '../vision/classification/BlendshapeClassifier';
@@ -208,13 +208,21 @@ export const BattleView: React.FC = () => {
       const vidShared = videoSharedRef.current || videoP1Ref.current;
       if (vidShared && vidShared.readyState >= 2 && !vidShared.paused) {
         const res = FaceDetectorService.detect(vidShared, now);
-        const rawFaces: DetectedFace[] = res.boxes.map((box, idx) => {
-          const bRes = BlendshapeClassifierService.classify(res.blendshapes[idx] || {}, idx + 1);
-          return {
-            trackId: idx + 1,
-            faceId: `Face ${idx + 1}`,
+        const p1Candidates: DetectedFace[] = [];
+        const p2Candidates: DetectedFace[] = [];
+
+        res.boxes.forEach((box, idx) => {
+          const zone = getFaceZone(box, true);
+          // Fixed zone-based track ID: 101 for Player 1 (Left), 102 for Player 2 (Right)
+          // Eliminates track-swapping jitter when MediaPipe reorders detected faces
+          const trackId = zone === 1 ? 101 : 102;
+          const blendshape = res.blendshapes[idx] || {};
+          const bRes = BlendshapeClassifierService.classify(blendshape, trackId);
+          const detected: DetectedFace = {
+            trackId,
+            faceId: zone === 1 ? 'P1' : 'P2',
             box,
-            blendshapes: res.blendshapes[idx],
+            blendshapes: blendshape,
             expression: bRes.expression,
             expressionLabel: bRes.label,
             rawModelLabel: bRes.rawLabel,
@@ -223,16 +231,17 @@ export const BattleView: React.FC = () => {
             missingFrames: 0,
             lastSeen: Date.now(),
           };
+
+          if (zone === 1) {
+            p1Candidates.push(detected);
+          } else {
+            p2Candidates.push(detected);
+          }
         });
 
-        const { p1Faces, p2Faces } = countFacesInZones(rawFaces, true);
-        setZoneCounts({ p1: p1Faces.length, p2: p2Faces.length });
-
-        const validP1 = p1Faces.length === 1 ? p1Faces[0] : null;
-        const validP2 = p2Faces.length === 1 ? p2Faces[0] : null;
-
-        setP1Face(validP1);
-        setP2Face(validP2);
+        setZoneCounts({ p1: p1Candidates.length, p2: p2Candidates.length });
+        setP1Face(p1Candidates.length === 1 ? p1Candidates[0] : null);
+        setP2Face(p2Candidates.length === 1 ? p2Candidates[0] : null);
       }
     }
 

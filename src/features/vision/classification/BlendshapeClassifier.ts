@@ -65,6 +65,9 @@ export class BlendshapeClassifier {
     const smileScore = Math.max(smileL, smileR) * 0.65 + ((smileL + smileR) * 0.5) * 0.35;
     const rawSenang = smileScore * 1.05 + ((cheekL + cheekR) * 0.5) * 0.20;
 
+    // Smile veto factor: a genuine smile vetoes negative emotions (marah, sedih, takut)
+    const smileVeto = Math.max(0, 1 - Math.max(smileL, smileR) * 2.5);
+
     // 2. Marah (Angry)
     // Primary: browDownLeft/Right (AU4); Secondary: mouthFrown, eyeSquint, jawClench
     const browDownL = b['browDownLeft'] || 0;
@@ -80,31 +83,34 @@ export class BlendshapeClassifier {
     const frownScore = (frownL + frownR) * 0.5;
     const pressScore = (pressL + pressR) * 0.5;
     const eyeSquintScore = (eyeSquintL + eyeSquintR) * 0.5;
-    const rawMarah = browDownScore * 0.70 + frownScore * 0.15 + pressScore * 0.10 + eyeSquintScore * 0.10;
+    const rawMarah = (browDownScore * 0.80 + frownScore * 0.15 + pressScore * 0.10 + eyeSquintScore * 0.10) * smileVeto;
 
     // 3. Sedih (Sad / Pouting / Cemberut)
-    // Primary: mouthFrownLeft/Right (AU15), mouthShrugLower (AU17), mouthPress (AU24), browInnerUp (AU1)
-    // Note: Sticking tongue out (melet) has wide open jaw without frown; penalized via openJawPenalty.
+    // FACS Rule: True sadness requires active mouth engagement (mouthFrown AU15, mouthShrugLower AU17, or mouthRollLower).
+    // BrowInnerUp (AU1) acts ONLY as an emotional amplifier if mouth is actively frowning/pouting.
+    // This prevents resting faces or screen-reading gaze (which often have browInnerUp ~0.20) from falsely triggering Sedih.
     const mouthFrown = Math.max(frownL, frownR) * 0.70 + ((frownL + frownR) * 0.5) * 0.30;
     const mouthPout = Math.max(
       b['mouthShrugLower'] || 0,
-      b['mouthPucker'] || 0,
-      ((b['mouthPressLeft'] || 0) + (b['mouthPressRight'] || 0)) * 0.5,
-      b['mouthRollLower'] || 0
+      b['mouthRollLower'] || 0,
+      (b['mouthPucker'] || 0) * 0.8,
+      ((pressL + pressR) * 0.5)
     );
-    const mouthSadness = Math.max(mouthFrown * 1.35, (mouthFrown + mouthPout) * 0.95);
+    const mouthSadness = Math.max(mouthFrown * 1.45, (mouthFrown + mouthPout) * 1.15, mouthPout * 1.30);
     const browSadness = b['browInnerUp'] || 0;
+
+    // BrowInnerUp amplifies grief ONLY IF mouth is actively engaged in sadness (mouthSadness >= 0.08)
+    const browAmplifier = mouthSadness >= 0.08 ? 1.0 + Math.min(0.65, browSadness * 1.2) : 0.0;
+    const rawSadnessBase = mouthSadness * browAmplifier;
+
     const jawOpen = b['jawOpen'] || 0;
     const openJawPenalty = Math.max(0, 1 - jawOpen * 3.5);
     const browDownAvg = (browDownL + browDownR) * 0.5;
     const heavyAngryPenalty = browDownAvg > 0.40 ? Math.max(0.2, 1 - (browDownAvg - 0.40) * 2.5) : 1.0;
-    const rawSedih = Math.max(mouthSadness, mouthSadness * 0.6 + browSadness * 0.6, browSadness * 1.2)
-      * openJawPenalty
-      * heavyAngryPenalty;
+    const rawSedih = rawSadnessBase * openJawPenalty * heavyAngryPenalty * smileVeto;
 
     // 4. Takut (Fear / Scared / Shocked / Kaget)
     // Primary: eyeWideLeft/Right (AU5), jawOpen / mouthGasp, browUp (AU1+2)
-    // Note: Fear strictly requires widened eyes. Without wide eyes, opening mouth is just eating/talking.
     const eyeWideL = b['eyeWideLeft'] || 0;
     const eyeWideR = b['eyeWideRight'] || 0;
     const browOuterUpL = b['browOuterUpLeft'] || 0;
@@ -116,8 +122,8 @@ export class BlendshapeClassifier {
       b['mouthFunnel'] || 0,
       ((b['mouthStretchLeft'] || 0) + (b['mouthStretchRight'] || 0)) * 0.5
     );
-    const eyeWideFactor = Math.min(1.0, eyeWide / 0.15);
-    const rawTakut = (eyeWide * 0.55 + browUp * 0.30 + mouthGasp * 0.15) * 1.35 * eyeWideFactor;
+    const eyeWideFactor = Math.min(1.0, Math.max(0.35, eyeWide / 0.12));
+    const rawTakut = (eyeWide * 0.58 + browUp * 0.28 + mouthGasp * 0.20) * 1.35 * eyeWideFactor * smileVeto;
 
     // 5. Sebal (Disgust / Sneer / Contempt)
     // Primary: noseSneerLeft/Right (AU9), mouthUpperUpLeft/Right (AU10), asymmetric sneer
@@ -128,8 +134,8 @@ export class BlendshapeClassifier {
     const sneer = Math.max(noseSneerL, noseSneerR) * 0.7 + ((noseSneerL + noseSneerR) * 0.5) * 0.3;
     const upperUp = Math.max(mouthUpperUpL, mouthUpperUpR) * 0.7 + ((mouthUpperUpL + mouthUpperUpR) * 0.5) * 0.3;
     const asymmetry = Math.abs(mouthUpperUpL - mouthUpperUpR) * 0.4;
-    const disgustBase = Math.max(sneer * 1.30, upperUp * 1.20, (sneer + upperUp) * 0.80) + asymmetry;
-    const rawSebal = disgustBase * 1.40;
+    const disgustBase = Math.max(sneer * 1.35, upperUp * 1.25, (sneer + upperUp) * 0.85) + asymmetry;
+    const rawSebal = disgustBase * 1.45 * Math.max(0, 1 - Math.min(smileL, smileR) * 1.8);
 
     // 6. Netral (Neutral baseline)
     const maxEmotionalScore = Math.max(rawSenang, rawMarah, rawSedih, rawTakut, rawSebal);
